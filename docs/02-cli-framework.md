@@ -203,7 +203,7 @@ export function buildProgram(): Command {
 
   program
     .name("myclaw")
-    .description("MyClaw - Your personal AI assistant gateway")
+    .description("MyClaw - Your personal AI assistant")
     .version("1.0.0")
     .option("-v, --verbose", "Enable verbose logging", false);
 
@@ -229,7 +229,7 @@ export function buildProgram(): Command {
 ```typescript
 program
   .name("myclaw")
-  .description("MyClaw - Your personal AI assistant gateway")
+  .description("MyClaw - Your personal AI assistant")
   .version("1.0.0")
   .option("-v, --verbose", "Enable verbose logging", false);
 ```
@@ -566,7 +566,7 @@ npx tsx src/entry.ts status       # 运行你的新命令
 | `myclaw doctor` | 诊断检查，验证安装和配置是否正确 | 本章 |
 | `myclaw onboard` | 引导配置向导，交互式生成配置文件 | [第3章](./03-configuration.md) |
 | `myclaw gateway` | 启动 WebSocket 网关服务 | [第4章](./04-gateway-server.md) |
-| `myclaw agent` | 终端交互式 AI 聊天 | [第5章](./05-agent-runtime.md) |
+| `myclaw agent` | 终端交互式 AI 聊天（InteractiveMode TUI：多行编辑器、Markdown 渲染、流式输出） | [第5章](./05-agent-runtime.md) |
 | `myclaw message send` | 向指定通道发送消息 | [第7章](./07-message-routing.md) |
 
 ---

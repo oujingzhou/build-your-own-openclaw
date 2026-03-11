@@ -64,8 +64,9 @@ stateDiagram-v2
 | 文件 | 作用 |
 | --- | --- |
 | `src/plugins/registry.ts` | 插件接口定义（`Plugin`、`PluginContext`）和注册表实现（`PluginRegistry`），以及示例插件 |
-| `src/agent/providers/types.ts` | `AgentTool` 接口定义——插件注册工具时的数据结构 |
 | `src/channels/transport.ts` | `Channel` 抽象类——插件注册通道时的数据结构 |
+
+**注意**：当前 MyClaw 使用 pi-coding-agent 的工具系统，插件如需注册自定义工具，应使用 pi-coding-agent 的 `customTools` 参数而非旧的 `AgentTool` 接口。
 
 ## 插件接口设计
 

@@ -5,8 +5,17 @@
  * Plugins can register tools, channels, commands, and HTTP handlers.
  */
 
-import type { AgentTool } from "../agent/providers/types.js";
 import type { Channel } from "../channels/transport.js";
+
+/**
+ * Tool definition for plugins to register.
+ */
+export interface AgentTool {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+  execute: (args: Record<string, unknown>) => Promise<string>;
+}
 
 /**
  * Plugin interface - what every plugin must implement

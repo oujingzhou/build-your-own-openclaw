@@ -98,10 +98,8 @@ graph TD
     PROTO["gateway/protocol.ts<br/>消息协议"]
 
     AGENT["agent/runtime.ts<br/>Agent 运行时"]
-    TOOLS["agent/tools.ts<br/>内置工具"]
-    PROV_A["agent/providers/anthropic.ts<br/>Anthropic Provider"]
-    PROV_O["agent/providers/openai.ts<br/>OpenAI Provider"]
-    TYPES["agent/providers/types.ts<br/>Provider 接口"]
+    MODEL["agent/model.ts<br/>Model 解析"]
+    CMD_AGENT_FILE["cli/commands/agent.ts<br/>Agent 命令 (InteractiveMode)"]
 
     TRANS["channels/transport.ts<br/>Channel 抽象基类"]
     TERM["channels/terminal.ts<br/>终端通道"]
@@ -120,7 +118,8 @@ graph TD
     REG --> CMD_DR
     REG --> CMD_MSG
 
-    CMD_AGENT --> AGENT
+    CMD_AGENT --> CMD_AGENT_FILE
+    CMD_AGENT_FILE --> AGENT
     CMD_AGENT --> ROUTER
     CMD_AGENT --> TERM
 
@@ -135,11 +134,10 @@ graph TD
     GW --> ROUTER
     GW --> MANAGER
 
-    AGENT --> TOOLS
-    AGENT --> PROV_A
-    AGENT --> PROV_O
-    AGENT --> TYPES
+    AGENT --> MODEL
     AGENT --> CONFIG
+
+    MODEL --> CONFIG
 
     ROUTER --> AGENT
     ROUTER --> CONFIG
@@ -151,7 +149,6 @@ graph TD
     TERM --> TRANS
     FEISHU --> TRANS
 
-    PLUGIN --> TYPES
     PLUGIN --> TRANS
 
     style ENTRY fill:#e1f5fe
@@ -170,7 +167,7 @@ graph TD
 | Ch.2 | CLI 框架 | `src/cli/program.ts`, `src/cli/register.ts` | Commander.js 命令注册、参数处理、上下文传递 |
 | Ch.3 | 配置系统 | `src/config/schema.ts`, `src/config/loader.ts` | Zod 验证、YAML 加载、默认配置生成、密钥解析 |
 | Ch.4 | 网关服务器 | `src/gateway/server.ts`, `src/gateway/session.ts` | WebSocket 通信、HTTP 健康检查、会话管理、认证 |
-| Ch.5 | Agent 运行时 | `src/agent/runtime.ts`, `src/agent/tools.ts`, `src/agent/providers/` | Agent Loop、LLM 调用、工具执行、多 Provider 支持 |
+| Ch.5 | Agent 运行时 | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` | Model 解析、pi-mono 集成、InteractiveMode TUI、gateway 路径 |
 | Ch.6 | 通道抽象 | `src/channels/transport.ts`, `src/channels/terminal.ts` | Channel 基类、EventEmitter 事件模型、终端交互 |
 | Ch.7 | 消息路由 | `src/routing/router.ts` | 分层路由匹配（精确 → 通配符 → 报错） |
 | Ch.8 | 飞书集成 | `src/channels/feishu.ts` | 飞书机器人消息收发 |
@@ -631,11 +628,11 @@ flowchart TD
     START_GW --> INIT_AGENT["createAgentRuntime(config)<br/>初始化 Agent"]
     START_GW --> INIT_ROUTER["createRouter(config, agent)<br/>构建路由表"]
 
-    INIT_AGENT --> LOAD_TOOLS["加载内置工具<br/>read, write, edit, exec, grep, find, ls"]
-    INIT_AGENT --> LOAD_PROVIDERS["创建 LLM Provider 实例<br/>Anthropic / OpenAI / OpenRouter"]
-    LOAD_PROVIDERS --> CHECK_KEY{"API Key 存在？"}
-    CHECK_KEY --> |否| SKIP["跳过该 Provider<br/>打印警告"]
-    CHECK_KEY --> |是| CREATE_PROV["创建 Provider 实例"]
+    INIT_AGENT --> LOAD_PI["加载 pi-coding-agent<br/>内置工具 + Skills 扫描"]
+    INIT_AGENT --> RESOLVE_MODEL["resolveModel(config)<br/>映射到 pi-ai Model"]
+    RESOLVE_MODEL --> CHECK_KEY{"API Key 存在？"}
+    CHECK_KEY --> |否| SKIP["跳过该模型<br/>打印警告"]
+    CHECK_KEY --> |是| CREATE_SESSION["createAgentSession()<br/>创建 pi-coding-agent 会话"]
 
     INIT_ROUTER --> BUILD_RULES["解析路由规则"]
 
@@ -800,11 +797,28 @@ async function* chatStream(request: ChatRequest): AsyncIterable<string> {
 
 ### 5. 更多 LLM Provider
 
-在 `agent/providers/` 目录下添加新文件即可。因为所有 Provider 都实现了统一的 `LLMProvider` 接口，新增 Provider 只需实现 `chat()` 方法：
+MyClaw 通过 pi-ai 的 `ModelRegistry` 支持多个 LLM 提供商。要添加新模型：
 
-- **Google Gemini**：使用 `@google/generative-ai` 包
-- **本地模型**：通过 Ollama 的 OpenAI 兼容 API（设置 `baseUrl: "http://localhost:11434/v1"`）
-- **Azure OpenAI**：使用 OpenAI 客户端 + 自定义 baseUrl
+1. **在配置文件中添加 provider**：编辑 `~/.myclaw/myclaw.yaml`
+2. **设置 API Key**：通过环境变量或配置文件的 `apiKey` 字段
+3. **指定模型名**：使用 provider 支持的模型 ID
+
+pi-ai 的模型注册表已经内置了主流模型的参数（context window、cost 等）。对于自定义模型（如本地 Ollama）：
+
+```yaml
+providers:
+  - id: ollama
+    type: openai
+    model: llama2
+    baseUrl: http://localhost:11434/v1
+    apiKey: dummy  # Ollama 不需要真实 key
+```
+
+支持的 provider 类型：
+- **anthropic**：Anthropic Claude
+- **openai**：OpenAI GPT
+- **openrouter**：OpenRouter（免费模型聚合）
+- 任何 **OpenAI 兼容 API**（通过 `type: openai` + 自定义 `baseUrl`）
 
 ---
 
@@ -813,10 +827,10 @@ async function* chatStream(request: ChatRequest): AsyncIterable<string> {
 | 特性 | MyClaw（教学版） | 完整版 OpenClaw |
 | --- | --- | --- |
 | **定位** | 教学项目，帮助理解架构 | 生产就绪的 AI Agent 平台 |
-| **代码量** | ~3,000 行 TypeScript | 数万行 |
+| **代码量** | ~2,600 行 TypeScript | 数万行 |
 | **LLM Provider** | Anthropic + OpenAI + OpenRouter | 10+ 提供商，含本地模型 |
 | **消息通道** | 终端 + 飞书 | 10+ 平台（Telegram/Discord/Slack...） |
-| **内置工具** | 7 个（read/write/edit/exec/grep/find/ls） | 50+ 技能 |
+| **内置工具** | pi-coding-agent 工具集（read/write/edit/bash） | 50+ 技能 |
 | **扩展机制** | 简单插件框架 | 40+ 扩展，成熟的插件生态 |
 | **对话存储** | 内存（重启丢失） | 多种持久化后端（SQLite/PostgreSQL/Redis） |
 | **响应模式** | 非流式（等待完整生成） | 流式 + 非流式 |
@@ -893,6 +907,6 @@ MyClaw 是一个**教学项目**。它的目的不是成为一个生产级的 AI
 - 一个飞书集成，演示了与真实外部服务的对接
 - 一个插件系统，通过控制反转实现了可扩展性
 
-这些组件加在一起，构成了一个大约 3,000 行代码的完整系统。虽然它比完整版 OpenClaw 简单得多，但**核心架构是一致的**。理解了 MyClaw，你就理解了 OpenClaw 的设计哲学。
+这些组件加在一起，构成了一个大约 2,600 行代码的完整系统。虽然它比完整版 OpenClaw 简单得多，但**核心架构是一致的**。理解了 MyClaw，你就理解了 OpenClaw 的设计哲学。
 
 希望这个教程能够激发你构建自己的 AI Agent 系统的灵感。架构的精髓不在于代码量的多少，而在于抽象的合理性和模块之间的协作方式。现在，去构建属于你自己的系统吧！

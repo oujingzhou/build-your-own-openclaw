@@ -1,7 +1,7 @@
 {
   "name": "build-your-own-openclaw",
   "version": "1.0.0",
-  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant gateway",
+  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant",
   "type": "module",
   "bin": {
     "myclaw": "./myclaw.mjs"
@@ -19,14 +19,15 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
+    "@mariozechner/pi-ai": "^0.57.1",
+    "@mariozechner/pi-agent-core": "^0.57.1",
+    "@mariozechner/pi-coding-agent": "^0.57.1",
     "chalk": "^5.4.1",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
     "grammy": "^1.35.0",
     "eventemitter3": "^5.0.1",
     "@larksuiteoapi/node-sdk": "^1.59.0",
-    "openai": "^4.85.4",
     "readline": "^1.3.0",
     "ws": "^8.18.1",
     "yaml": "^2.7.0",

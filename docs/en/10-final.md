@@ -98,10 +98,8 @@ graph TD
     PROTO["gateway/protocol.ts<br/>Message Protocol"]
 
     AGENT["agent/runtime.ts<br/>Agent Runtime"]
-    TOOLS["agent/tools.ts<br/>Built-in Tools"]
-    PROV_A["agent/providers/anthropic.ts<br/>Anthropic Provider"]
-    PROV_O["agent/providers/openai.ts<br/>OpenAI Provider"]
-    TYPES["agent/providers/types.ts<br/>Provider Interface"]
+    MODEL["agent/model.ts<br/>Model Resolution"]
+    CMD_AGENT_FILE["cli/commands/agent.ts<br/>Agent Command (InteractiveMode)"]
 
     TRANS["channels/transport.ts<br/>Channel Abstract Base"]
     TERM["channels/terminal.ts<br/>Terminal Channel"]
@@ -120,7 +118,8 @@ graph TD
     REG --> CMD_DR
     REG --> CMD_MSG
 
-    CMD_AGENT --> AGENT
+    CMD_AGENT --> CMD_AGENT_FILE
+    CMD_AGENT_FILE --> AGENT
     CMD_AGENT --> ROUTER
     CMD_AGENT --> TERM
 
@@ -135,11 +134,10 @@ graph TD
     GW --> ROUTER
     GW --> MANAGER
 
-    AGENT --> TOOLS
-    AGENT --> PROV_A
-    AGENT --> PROV_O
-    AGENT --> TYPES
+    AGENT --> MODEL
     AGENT --> CONFIG
+
+    MODEL --> CONFIG
 
     ROUTER --> AGENT
     ROUTER --> CONFIG
@@ -151,7 +149,6 @@ graph TD
     TERM --> TRANS
     FEISHU --> TRANS
 
-    PLUGIN --> TYPES
     PLUGIN --> TRANS
 
     style ENTRY fill:#e1f5fe
@@ -170,7 +167,7 @@ graph TD
 | Ch.2 | CLI Framework | `src/cli/program.ts`, `src/cli/register.ts` | Commander.js command registration, argument handling, context passing |
 | Ch.3 | Configuration System | `src/config/schema.ts`, `src/config/loader.ts` | Zod validation, YAML loading, default config generation, secret resolution |
 | Ch.4 | Gateway Server | `src/gateway/server.ts`, `src/gateway/session.ts` | WebSocket communication, HTTP health check, session management, authentication |
-| Ch.5 | Agent Runtime | `src/agent/runtime.ts`, `src/agent/tools.ts`, `src/agent/providers/` | Agent Loop, LLM calls, tool execution, multi-Provider support |
+| Ch.5 | Agent Runtime | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` | Model resolution, pi-mono integration, InteractiveMode TUI, gateway path |
 | Ch.6 | Channel Abstraction | `src/channels/transport.ts`, `src/channels/terminal.ts` | Channel base class, EventEmitter event model, terminal interaction |
 | Ch.7 | Message Routing | `src/routing/router.ts` | Layered route matching (exact → wildcard → error) |
 | Ch.8 | Feishu Integration | `src/channels/feishu.ts` | Feishu bot message sending and receiving |
@@ -632,11 +629,11 @@ flowchart TD
     START_GW --> INIT_AGENT["createAgentRuntime(config)<br/>Initialize Agent"]
     START_GW --> INIT_ROUTER["createRouter(config, agent)<br/>Build routing table"]
 
-    INIT_AGENT --> LOAD_TOOLS["Load built-in tools<br/>read, write, edit, exec, grep, find, ls"]
-    INIT_AGENT --> LOAD_PROVIDERS["Create LLM Provider instances<br/>Anthropic / OpenAI / OpenRouter"]
-    LOAD_PROVIDERS --> CHECK_KEY{"API Key exists?"}
-    CHECK_KEY --> |No| SKIP["Skip this Provider<br/>Print warning"]
-    CHECK_KEY --> |Yes| CREATE_PROV["Create Provider instance"]
+    INIT_AGENT --> LOAD_PI["Load pi-coding-agent<br/>Built-in tools + Skills scan"]
+    INIT_AGENT --> RESOLVE_MODEL["resolveModel(config)<br/>Map to pi-ai Model"]
+    RESOLVE_MODEL --> CHECK_KEY{"API Key exists?"}
+    CHECK_KEY --> |No| SKIP["Skip this model<br/>Print warning"]
+    CHECK_KEY --> |Yes| CREATE_SESSION["createAgentSession()<br/>Create pi-coding-agent session"]
 
     INIT_ROUTER --> BUILD_RULES["Parse routing rules"]
 
@@ -801,11 +798,28 @@ async function* chatStream(request: ChatRequest): AsyncIterable<string> {
 
 ### 5. More LLM Providers
 
-Simply add new files under the `agent/providers/` directory. Since all Providers implement the unified `LLMProvider` interface, adding a new Provider only requires implementing the `chat()` method:
+MyClaw supports multiple LLM providers through pi-ai's `ModelRegistry`. To add a new model:
 
-- **Google Gemini**: Use the `@google/generative-ai` package
-- **Local models**: Via Ollama's OpenAI-compatible API (set `baseUrl: "http://localhost:11434/v1"`)
-- **Azure OpenAI**: Use the OpenAI client + custom baseUrl
+1. **Add provider in config**: Edit `~/.myclaw/myclaw.yaml`
+2. **Set API Key**: Via environment variable or config file's `apiKey` field
+3. **Specify model name**: Use the provider's supported model ID
+
+pi-ai's model registry has built-in parameters (context window, cost, etc.) for mainstream models. For custom models (like local Ollama):
+
+```yaml
+providers:
+  - id: ollama
+    type: openai
+    model: llama2
+    baseUrl: http://localhost:11434/v1
+    apiKey: dummy  # Ollama doesn't need a real key
+```
+
+Supported provider types:
+- **anthropic**: Anthropic Claude
+- **openai**: OpenAI GPT
+- **openrouter**: OpenRouter (free model aggregator)
+- Any **OpenAI-compatible API** (via `type: openai` + custom `baseUrl`)
 
 ---
 
@@ -814,10 +828,10 @@ Simply add new files under the `agent/providers/` directory. Since all Providers
 | Feature | MyClaw (Teaching Version) | Full OpenClaw |
 | --- | --- | --- |
 | **Purpose** | Teaching project to help understand architecture | Production-ready AI Agent platform |
-| **Code size** | ~3,000 lines of TypeScript | Tens of thousands of lines |
+| **Code size** | ~2,600 lines of TypeScript | Tens of thousands of lines |
 | **LLM Providers** | Anthropic + OpenAI + OpenRouter | 10+ providers, including local models |
 | **Message Channels** | Terminal + Feishu | 10+ platforms (Telegram/Discord/Slack...) |
-| **Built-in Tools** | 7 (read/write/edit/exec/grep/find/ls) | 50+ skills |
+| **Built-in Tools** | pi-coding-agent tool set (read/write/edit/bash) | 50+ skills |
 | **Extension Mechanism** | Simple plugin framework | 40+ extensions, mature plugin ecosystem |
 | **Conversation Storage** | In-memory (lost on restart) | Multiple persistence backends (SQLite/PostgreSQL/Redis) |
 | **Response Mode** | Non-streaming (waits for complete generation) | Streaming + non-streaming |
@@ -894,6 +908,6 @@ Through these 10 chapters of learning, you have built with your own hands:
 - A Feishu integration demonstrating interfacing with real external services
 - A plugin system achieving extensibility through Inversion of Control
 
-Together, these components form a complete system of approximately 3,000 lines of code. While it's much simpler than the full version of OpenClaw, **the core architecture is consistent**. Understanding MyClaw means understanding OpenClaw's design philosophy.
+Together, these components form a complete system of approximately 2,600 lines of code. While it's much simpler than the full version of OpenClaw, **the core architecture is consistent**. Understanding MyClaw means understanding OpenClaw's design philosophy.
 
 We hope this tutorial inspires you to build your own AI Agent systems. The essence of architecture lies not in the amount of code, but in the soundness of abstractions and the way modules collaborate. Now, go build your own system!

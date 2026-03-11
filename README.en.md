@@ -2,11 +2,11 @@
 
 [中文](README.md) | English
 
-**Build a multi-channel AI assistant from scratch in ~3,000 lines of TypeScript.**
+**Build a multi-channel AI assistant from scratch in ~2,600 lines of TypeScript.**
 
 Ever wondered how AI assistants like [OpenClaw](https://github.com/anthropics/openclaw) connect to multiple platforms — Feishu, Telegram — all at once? How message routing, Agent tool-call loops, and channel abstractions actually work?
 
-This tutorial answers those questions by building **MyClaw**, a simplified version of OpenClaw. 10 chapters, each focusing on a core module, guiding you to build a working multi-channel AI assistant from the ground up.
+This tutorial answers those questions by building **MyClaw**, a minimal teaching implementation of OpenClaw. 12 chapters, each focusing on a core module, guiding you to build a working multi-channel AI assistant from the ground up.
 
 ### What You'll Learn
 
@@ -15,6 +15,7 @@ This tutorial answers those questions by building **MyClaw**, a simplified versi
 - **Message routing** — Rule-based dispatch of messages from different channels to different Agents/Providers
 - **Configuration system** — Engineering practices with Zod Schema validation + YAML config
 - **WebSocket gateway** — Real-time communication service with authentication and session management
+- **Skills system** — Markdown-based prompt management with slash command invocation
 - **Plugin architecture** — Practical application of the Inversion of Control (IoC) pattern
 
 ### Who This Is For
@@ -27,7 +28,8 @@ This tutorial answers those questions by building **MyClaw**, a simplified versi
 
 - **Multi-channel** — Terminal + Feishu (Lark) + Telegram, with a unified abstraction for easy extension
 - **Multiple LLMs** — Anthropic (Claude), OpenAI (GPT-4o), OpenRouter (free models available)
-- **Coding Agent** — 7 built-in tools (read/write/edit/exec/grep/find/ls) with multi-round Tool Use
+- **Coding Agent** — Built-in tool set from pi-coding-agent (read/write/edit/bash) with multi-round Tool Use
+- **Skills system** — Define skills via SKILL.md, invoke with `/skill-name` slash commands
 - **Message routing** — Rule engine for flexible channel-to-Agent mapping
 - **WebSocket gateway** — Unified API control plane
 - **Plugin system** — Extensible runtime plugins
@@ -37,7 +39,7 @@ This tutorial answers those questions by building **MyClaw**, a simplified versi
 
 ## Tutorial Chapters
 
-This tutorial has 11 chapters, each focusing on a core module. It's recommended to read them in order. Each chapter includes complete code and design analysis.
+This tutorial has 12 chapters, each focusing on a core module. It's recommended to read them in order. Each chapter includes complete code and design analysis.
 
 | Chapter | Topic | What You'll Learn | Key Files |
 |---------|-------|-------------------|-----------|
@@ -45,12 +47,13 @@ This tutorial has 11 chapters, each focusing on a core module. It's recommended 
 | [02](docs/en/02-cli-framework.md) | CLI Framework | Commander.js commands, dependency injection | `src/cli/program.ts`, `src/entry.ts` |
 | [03](docs/en/03-configuration.md) | Configuration | Zod Schema validation, YAML config | `src/config/schema.ts`, `src/config/loader.ts` |
 | [04](docs/en/04-gateway-server.md) | Gateway Server | WebSocket server, session management, auth | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
-| [05](docs/en/05-agent-runtime.md) | Agent Runtime | LLM abstraction, Agent Loop, tool calls | `src/agent/runtime.ts`, `src/agent/providers/` |
+| [05](docs/en/05-agent-runtime.md) | Agent Runtime | LLM abstraction, Agent Loop, InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
 | [06](docs/en/06-channels.md) | Channel Abstraction | Interface design, EventEmitter, polymorphism | `src/channels/transport.ts`, `src/channels/terminal.ts` |
 | [07](docs/en/07-message-routing.md) | Message Routing | Layered matching, multi-Agent dispatch | `src/routing/router.ts` |
 | [08](docs/en/08-feishu.md) | Feishu Channel | External platform integration, WebSocket | `src/channels/feishu.ts` |
 | [08b](docs/en/08b-telegram.md) | Telegram Channel | grammY integration, Long Polling, message chunking | `src/channels/telegram.ts` |
 | [09](docs/en/09-plugins.md) | Plugin System | Inversion of control, runtime extensions | `src/plugins/registry.ts` |
+| [09b](docs/en/09b-skills.md) | Skills System | SKILL.md definition, slash commands, prompt management | `src/skills/loader.ts`, `src/skills/registry.ts` |
 | [10](docs/en/10-final.md) | Putting It Together | End-to-end debugging, complete data flow | All |
 
 ## Architecture Overview
@@ -81,11 +84,14 @@ graph TB
     end
 
     subgraph Ch05["Ch.5 Agent Runtime"]
-        AGENT["Agent Runtime"]
-        TOOLS["Tools<br/>read · write · edit · exec<br/>grep · find · ls"]
-        subgraph LLM["LLM Providers"]
+        AGENT["Agent Runtime<br/>(gateway path)"]
+        AGENT_CMD["InteractiveMode<br/>(agent command TUI)"]
+        MODEL["Model Resolution"]
+        PI_MONO["pi-coding-agent<br/>Built-in tools + Skills"]
+        subgraph LLM["LLM Providers (via pi-ai)"]
             ANTHROPIC["Anthropic"]
             OPENAI["OpenAI"]
+            OPENROUTER["OpenRouter"]
         end
     end
 
@@ -93,13 +99,20 @@ graph TB
         PLUGINS["Plugin Registry"]
     end
 
+    subgraph Ch09b["Ch.9b Skills"]
+        SKILLS["Skill Registry<br/>/translate · /summarize"]
+    end
+
     CONFIG -.-> CMD_AGENT & CMD_GW
-    CMD_AGENT --> TERM
+    CMD_AGENT --> AGENT_CMD
+    AGENT_CMD --> PI_MONO
     CMD_GW --> GW --> Ch06
     Ch06 --> ROUTER --> AGENT
-    AGENT --> LLM
-    AGENT --> TOOLS
+    AGENT --> MODEL --> LLM
+    AGENT --> PI_MONO
     PLUGINS -.-> AGENT
+    SKILLS -.-> ROUTER
+    SKILLS -.-> AGENT
 ```
 
 ## Message Processing Flow
@@ -138,6 +151,9 @@ build-your-own-openclaw/
 ├── myclaw.mjs                 # Entry point (version check + loader)
 ├── package.json               # Dependencies and scripts
 ├── tsconfig.json              # TypeScript configuration
+├── skills/                    # Built-in Skills
+│   ├── translate/SKILL.md     # Translation Skill
+│   └── summarize/SKILL.md     # Summarization Skill
 ├── src/
 │   ├── entry.ts               # Main entry
 │   ├── cli/
@@ -158,13 +174,8 @@ build-your-own-openclaw/
 │   │   ├── protocol.ts        # Message protocol definitions
 │   │   └── session.ts         # Session management
 │   ├── agent/
-│   │   ├── runtime.ts         # Agent runtime
-│   │   ├── tools.ts           # Built-in tools (read/write/edit/exec/grep/find/ls)
-│   │   └── providers/
-│   │       ├── types.ts       # Provider interface
-│   │       ├── anthropic.ts   # Anthropic (Claude)
-│   │       ├── openai.ts      # OpenAI / OpenRouter
-│   │       └── index.ts       # Exports
+│   │   ├── runtime.ts         # Agent runtime (gateway path)
+│   │   └── model.ts           # Model resolution (auth, registry, model mapping)
 │   ├── channels/
 │   │   ├── transport.ts       # Channel abstract base class
 │   │   ├── terminal.ts        # Terminal channel
@@ -173,6 +184,9 @@ build-your-own-openclaw/
 │   │   └── manager.ts         # Channel manager
 │   ├── routing/
 │   │   └── router.ts          # Message router
+│   ├── skills/
+│   │   ├── loader.ts          # Skill loader
+│   │   └── registry.ts        # Skill registry
 │   └── plugins/
 │       └── registry.ts        # Plugin registry
 └── docs/                      # Tutorial documentation
@@ -182,10 +196,10 @@ build-your-own-openclaw/
 
 | Feature | MyClaw (this tutorial) | Full OpenClaw |
 |---------|----------------------|---------------|
-| Code size | ~3,000 lines | ~921,000 lines |
+| Code size | ~2,600 lines | ~921,000 lines |
 | Channels | 3 (Terminal + Feishu + Telegram) | 23+ |
 | LLM Providers | 3 (Anthropic + OpenAI + OpenRouter) | 10+ |
-| Tools | 7 Coding Agent tools | 50+ Skills, 40+ Extensions |
+| Tools | pi-coding-agent built-in tool set | 50+ Skills, 40+ Extensions |
 | Platforms | CLI only | CLI + macOS + iOS + Android |
 | Protocol | Simple JSON | TypeBox Schema validation |
 | Security | Basic token auth | DM pairing, role control, operation approval |

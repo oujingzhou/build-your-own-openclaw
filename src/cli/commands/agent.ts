@@ -2,14 +2,19 @@
  * Chapter 5 - Agent Command
  *
  * Starts an interactive agent session in the terminal.
- * This is the simplest way to chat with OpenClaw.
+ * Uses pi-coding-agent's InteractiveMode for a full TUI experience:
+ * multi-line editor, markdown rendering, streaming output, tool display.
  */
 
 import type { Command } from "commander";
 import { getContext } from "../program.js";
-import { createTerminalChannel } from "../../channels/terminal.js";
-import { createAgentRuntime } from "../../agent/runtime.js";
-import { createRouter } from "../../routing/router.js";
+import {
+  InteractiveMode,
+  createAgentSession,
+  SessionManager,
+} from "@mariozechner/pi-coding-agent";
+import { createAuthStorage, createModelRegistry, resolveModel } from "../../agent/model.js";
+import { buildSystemPrompt } from "../../agent/runtime.js";
 
 export function registerAgentCommand(program: Command): void {
   program
@@ -19,18 +24,38 @@ export function registerAgentCommand(program: Command): void {
     .option("-p, --provider <id>", "Provider ID to use")
     .action(async (opts, cmd) => {
       const ctx = getContext(cmd);
+      const config = ctx.config;
 
-      // Create the agent runtime
-      const agent = createAgentRuntime(ctx.config, {
-        providerId: opts.provider,
-        modelOverride: opts.model,
+      // 1. Resolve provider config
+      const providerId = opts.provider ?? config.defaultProvider;
+      const providerConfig = config.providers.find((p) => p.id === providerId);
+      if (!providerConfig) {
+        throw new Error(
+          `Provider '${providerId}' not found in config. ` +
+            `Available: ${config.providers.map((p: any) => p.id).join(", ")}`,
+        );
+      }
+
+      // 2. Set up auth & model from MyClaw config
+      const authStorage = createAuthStorage(config.providers);
+      const modelRegistry = createModelRegistry(authStorage);
+      const model = resolveModel(providerConfig, modelRegistry, opts.model);
+
+      // 3. Create AgentSession (pi-coding-agent handles skills, tools, etc.)
+      const sessionManager = SessionManager.inMemory(process.cwd());
+      const { session, modelFallbackMessage } = await createAgentSession({
+        cwd: process.cwd(),
+        authStorage,
+        modelRegistry,
+        model,
+        sessionManager,
       });
 
-      // Create the message router
-      const router = createRouter(ctx.config, agent);
+      // 4. Set MyClaw system prompt
+      session.agent.setSystemPrompt(buildSystemPrompt(config, providerConfig));
 
-      // Create and start the terminal channel
-      const terminal = createTerminalChannel(ctx.config, router);
-      await terminal.start();
+      // 5. Launch InteractiveMode TUI
+      const mode = new InteractiveMode(session, { modelFallbackMessage });
+      await mode.run();
     });
 }

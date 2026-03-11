@@ -26,7 +26,7 @@ export function buildProgram(): Command {
 
   program
     .name("myclaw")
-    .description("MyClaw - Your personal AI assistant gateway")
+    .description("MyClaw - Your personal AI assistant")
     .version("1.0.0")
     .option("-v, --verbose", "Enable verbose logging", false);
 

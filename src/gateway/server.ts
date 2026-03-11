@@ -20,6 +20,7 @@ import { SessionManager } from "./session.js";
 import { createAgentRuntime } from "../agent/runtime.js";
 import { createRouter } from "../routing/router.js";
 import { createChannelManager } from "../channels/manager.js";
+import type { SkillEntry } from "../skills/workspace.js";
 import type {
   GatewayMessage,
   GatewayResponse,
@@ -30,16 +31,21 @@ export interface GatewayOptions {
   host: string;
   port: number;
   verbose: boolean;
+  skills?: SkillEntry[];
+  skillsPrompt?: string;
 }
 
 export async function startGatewayServer(opts: GatewayOptions): Promise<void> {
-  const { config, host, port, verbose } = opts;
+  const { config, host, port, verbose, skills, skillsPrompt } = opts;
   const startTime = Date.now();
 
   // Initialize subsystems
   const sessions = new SessionManager(config.agent.maxHistoryMessages);
-  const agent = createAgentRuntime(config);
-  const router = createRouter(config, agent);
+  const agent = await createAgentRuntime(config, {
+    skills: skills?.map((s) => s.skill),
+    skillsPrompt,
+  });
+  const router = createRouter(config, agent, { skills });
 
   // Create HTTP server for health checks
   const httpServer = http.createServer((req, res) => {

@@ -4,7 +4,7 @@
 
 ## 我们要构建什么？
 
-MyClaw 是一个教学项目，目标是带你从零构建一个类似 OpenClaw 的**多通道 AI 助手网关**。通过亲手实现它，你将深入理解以下核心架构模式：
+MyClaw 是一个教学项目，目标是带你从零构建一个类似 OpenClaw 的**多通道 AI 助手**。通过亲手实现它，你将深入理解以下核心架构模式：
 
 - **AI Provider 抽象层** —— 如何统一对接 Anthropic Claude、OpenAI GPT 等不同 LLM
 - **消息通道系统** —— 如何让 Terminal、飞书、Telegram 等不同渠道共享同一个 AI 后端
@@ -27,9 +27,10 @@ graph TB
         AG[Agent 运行时]
     end
 
-    subgraph AI Providers
+    subgraph AI Providers["AI Providers (via pi-ai)"]
         Claude[Anthropic Claude]
         GPT[OpenAI GPT]
+        OR[OpenRouter]
     end
 
     T -->|WebSocket| GW
@@ -42,19 +43,6 @@ graph TB
 ```
 
 **核心理念**：用户通过不同通道发送消息，网关统一接收后路由到 Agent 运行时，Agent 选择合适的 LLM Provider 生成回复，再沿原路返回。这就是 OpenClaw 的基本工作流，MyClaw 将完整复刻这一模式。
-
-## 技术选型与理由
-
-在开始写代码之前，我们需要做出几个关键的技术决策。每一个选择都不是随意的——它们都服务于 OpenClaw 的设计哲学。
-
-| 选择 | 我们用什么 | 为什么这样选 |
-|------|-----------|-------------|
-| 语言 | **TypeScript** | 类型安全让大型项目可维护。AI SDK（Anthropic、OpenAI）都提供一流的 TypeScript 支持。OpenClaw 也用 TypeScript |
-| 模块系统 | **ESM** (`"type": "module"`) | 现代 Node.js 标准。支持 top-level `await`，这对我们的启动流程至关重要（后面会看到） |
-| 编译目标 | **ES2023** | 使用最新的 JavaScript 特性（如 `Array.findLast`、`Hashbang Grammar` 等），同时保证 Node.js 20+ 完全兼容 |
-| 模块解析 | **NodeNext** | Node.js 原生 ESM 解析策略，要求导入时写 `.js` 扩展名。虽然看起来有些"反直觉"，但这是 Node.js ESM 的官方规范 |
-| 配置格式 | **YAML** | 比 JSON 更适合人类编辑的配置文件，支持注释。OpenClaw 也采用 YAML 作为用户配置格式 |
-| Schema 验证 | **Zod** | 运行时类型验证库。用于校验配置文件和 API 响应，把"类型安全"从编译期延伸到运行时 |
 
 ## 项目结构
 
@@ -122,7 +110,7 @@ cd build-your-own-myclaw
 {
   "name": "build-your-own-openclaw",
   "version": "1.0.0",
-  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant gateway",
+  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant",
   "type": "module",
   "bin": {
     "myclaw": "./myclaw.mjs"
@@ -189,7 +177,7 @@ cd build-your-own-myclaw
 
 ```bash
 # 运行时依赖
-npm install @anthropic-ai/sdk openai commander ws zod chalk yaml dotenv eventemitter3 readline @larksuiteoapi/node-sdk
+npm install @mariozechner/pi-ai @mariozechner/pi-agent-core @mariozechner/pi-coding-agent commander ws zod chalk yaml dotenv eventemitter3 readline @larksuiteoapi/node-sdk
 
 # 开发依赖
 npm install -D typescript tsx @types/node @types/ws
@@ -201,8 +189,9 @@ npm install -D typescript tsx @types/node @types/ws
 
 | 依赖包 | 版本 | 类别 | 用途 | 对应模块 |
 |--------|------|------|------|---------|
-| `@anthropic-ai/sdk` | ^0.39.0 | AI | Anthropic Claude API 官方 SDK | `agent/providers/anthropic.ts` |
-| `openai` | ^4.85.4 | AI | OpenAI GPT API 官方 SDK | `agent/providers/openai.ts` |
+| `@mariozechner/pi-ai` | ^0.57.1 | AI | LLM 抽象层（Model、stream、provider 自动发现） | `agent/model.ts` |
+| `@mariozechner/pi-agent-core` | ^0.57.1 | AI | Agent 状态机 + agent loop（消息管理、工具执行循环） | `agent/runtime.ts` |
+| `@mariozechner/pi-coding-agent` | ^0.57.1 | AI | 编码 Agent 上层封装（内置工具、Skills、InteractiveMode TUI） | `cli/commands/agent.ts`, `agent/runtime.ts` |
 | `commander` | ^13.1.0 | CLI | 命令行框架，解析参数和子命令 | `cli/program.ts` |
 | `ws` | ^8.18.1 | 网络 | WebSocket 客户端和服务器库 | `gateway/server.ts` |
 | `zod` | ^3.24.2 | 验证 | 运行时 schema 验证，校验配置和输入 | `config/schema.ts` |
@@ -210,7 +199,7 @@ npm install -D typescript tsx @types/node @types/ws
 | `yaml` | ^2.7.0 | 配置 | 解析和序列化 YAML 配置文件 | `config/loader.ts` |
 | `dotenv` | ^16.4.7 | 配置 | 从 `.env` 文件加载环境变量（API Key 等） | `config/loader.ts` |
 | `eventemitter3` | ^5.0.1 | 架构 | 高性能事件发射器，用于模块间解耦通信 | `gateway/`, `channels/` |
-| `readline` | ^1.3.0 | UI | 终端交互式输入（用于 Terminal 通道） | `channels/terminal.ts` |
+| `readline` | ^1.3.0 | UI | 终端交互式输入（用于 Gateway 的 Terminal 通道） | `channels/terminal.ts` |
 | `@larksuiteoapi/node-sdk` | ^1.59.0 | 通道 | 飞书开放平台 SDK | `channels/feishu.ts` |
 
 开发依赖：

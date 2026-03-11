@@ -9,6 +9,8 @@ import readline from "node:readline";
 import chalk from "chalk";
 import type { OpenClawConfig, ChannelConfig } from "../config/index.js";
 import type { Router } from "../routing/router.js";
+import type { SkillEntry } from "../skills/workspace.js";
+import { listUserInvocable } from "../skills/workspace.js";
 import { Channel, type OutgoingMessage } from "./transport.js";
 
 export class TerminalChannel extends Channel {
@@ -20,14 +22,16 @@ export class TerminalChannel extends Channel {
   private config: ChannelConfig;
   private agentName: string;
   private chatId: string;
+  private skills: SkillEntry[];
 
-  constructor(config: ChannelConfig, router: Router, agentName: string) {
+  constructor(config: ChannelConfig, router: Router, agentName: string, skills?: SkillEntry[]) {
     super();
     this.id = config.id;
     this.config = config;
     this.router = router;
     this.agentName = agentName;
     this.chatId = "terminal";
+    this.skills = skills ?? [];
   }
 
   get connected(): boolean {
@@ -59,9 +63,13 @@ export class TerminalChannel extends Channel {
 
         // Handle special commands
         if (text.startsWith("/")) {
-          await this.handleCommand(text);
-          prompt();
-          return;
+          const handled = await this.handleCommand(text);
+          if (handled) {
+            prompt();
+            return;
+          }
+
+          // Not a built-in command — might be a skill invocation, route it
         }
 
         // Route to agent
@@ -98,7 +106,7 @@ export class TerminalChannel extends Channel {
     console.log(chalk.cyan(`${this.agentName}: ${message.text}`));
   }
 
-  private async handleCommand(input: string): Promise<void> {
+  private async handleCommand(input: string): Promise<boolean> {
     const [cmd, ...args] = input.split(" ");
 
     switch (cmd) {
@@ -108,13 +116,14 @@ export class TerminalChannel extends Channel {
         console.log(chalk.dim("  /clear   - Clear conversation history"));
         console.log(chalk.dim("  /history - Show conversation history"));
         console.log(chalk.dim("  /status  - Show status"));
+        console.log(chalk.dim("  /skills  - List available skills"));
         console.log(chalk.dim("  /quit    - Exit\n"));
-        break;
+        return true;
 
       case "/clear":
         this.clearSession(this.chatId);
         console.log(chalk.dim("\nConversation history cleared.\n"));
-        break;
+        return true;
 
       case "/history": {
         const history = this.sessions.get(this.chatId) ?? [];
@@ -133,23 +142,38 @@ export class TerminalChannel extends Channel {
           }
           console.log();
         }
-        break;
+        return true;
       }
 
       case "/status":
         console.log(chalk.dim(`\n  Channel: ${this.id} (${this.type})`));
         console.log(chalk.dim(`  Session: ${this.id}:${this.chatId}`));
         console.log(chalk.dim(`  History: ${(this.sessions.get(this.chatId) ?? []).length} messages\n`));
-        break;
+        return true;
+
+      case "/skills": {
+        const invocable = listUserInvocable(this.skills);
+        if (invocable.length === 0) {
+          console.log(chalk.dim("\nNo user-invocable skills available.\n"));
+        } else {
+          console.log(chalk.dim("\nAvailable skills:"));
+          for (const entry of invocable) {
+            const prefix = entry.emoji ? `${entry.emoji} ` : "";
+            console.log(chalk.dim(`  /${entry.skill.name} - ${prefix}${entry.skill.description}`));
+          }
+          console.log();
+        }
+        return true;
+      }
 
       case "/quit":
       case "/exit":
         await this.stop();
         process.exit(0);
-        break;
 
       default:
-        console.log(chalk.yellow(`\nUnknown command: ${cmd}. Type /help for available commands.\n`));
+        // Not a built-in command — return false so the caller can route it
+        return false;
     }
   }
 }
@@ -159,7 +183,8 @@ export class TerminalChannel extends Channel {
  */
 export function createTerminalChannel(
   config: OpenClawConfig,
-  router: Router
+  router: Router,
+  skills?: SkillEntry[]
 ): TerminalChannel {
   const channelConfig = config.channels.find(
     (c) => c.type === "terminal" && c.enabled
@@ -170,5 +195,5 @@ export function createTerminalChannel(
     greeting: `Hello! I'm ${config.agent.name}. How can I help you?`,
   };
 
-  return new TerminalChannel(channelConfig, router, config.agent.name);
+  return new TerminalChannel(channelConfig, router, config.agent.name, skills);
 }

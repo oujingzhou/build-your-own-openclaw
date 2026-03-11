@@ -4,7 +4,7 @@
 
 ## What Are We Building?
 
-MyClaw is an educational project that guides you through building a **multi-channel AI assistant gateway** similar to OpenClaw from scratch. By implementing it yourself, you'll gain a deep understanding of the following core architectural patterns:
+MyClaw is an educational project that guides you through building a **multi-channel AI assistant** similar to OpenClaw from scratch. By implementing it yourself, you'll gain a deep understanding of the following core architectural patterns:
 
 - **AI Provider Abstraction Layer** -- How to create a unified interface for different LLMs like Anthropic Claude, OpenAI GPT, and more
 - **Message Channel System** -- How to let different channels such as Terminal, Feishu, and Telegram share the same AI backend
@@ -27,9 +27,10 @@ graph TB
         AG[Agent Runtime]
     end
 
-    subgraph AI Providers
+    subgraph AI Providers["AI Providers (via pi-ai)"]
         Claude[Anthropic Claude]
         GPT[OpenAI GPT]
+        OR[OpenRouter]
     end
 
     T -->|WebSocket| GW
@@ -42,19 +43,6 @@ graph TB
 ```
 
 **Core concept**: Users send messages through different channels, the gateway receives them uniformly and routes them to the Agent runtime, the Agent selects the appropriate LLM Provider to generate a response, and then sends it back along the same path. This is the basic workflow of OpenClaw, and MyClaw will fully replicate this pattern.
-
-## Technology Choices and Rationale
-
-Before we start writing code, we need to make several key technical decisions. Each choice is deliberate -- they all serve OpenClaw's design philosophy.
-
-| Choice | What We Use | Why |
-|--------|-------------|-----|
-| Language | **TypeScript** | Type safety makes large projects maintainable. AI SDKs (Anthropic, OpenAI) provide first-class TypeScript support. OpenClaw also uses TypeScript |
-| Module System | **ESM** (`"type": "module"`) | The modern Node.js standard. Supports top-level `await`, which is essential for our startup flow (you'll see why soon) |
-| Compilation Target | **ES2023** | Uses the latest JavaScript features (such as `Array.findLast`, `Hashbang Grammar`, etc.) while ensuring full compatibility with Node.js 20+ |
-| Module Resolution | **NodeNext** | Node.js native ESM resolution strategy, which requires `.js` extensions in imports. While it may seem "counterintuitive," this is the official Node.js ESM specification |
-| Config Format | **YAML** | More human-friendly for configuration files than JSON, with comment support. OpenClaw also uses YAML for user configuration |
-| Schema Validation | **Zod** | A runtime type validation library. Used to validate configuration files and API responses, extending "type safety" from compile time to runtime |
 
 ## Project Structure
 
@@ -122,7 +110,7 @@ Then create `package.json` with the following content:
 {
   "name": "build-your-own-openclaw",
   "version": "1.0.0",
-  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant gateway",
+  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant",
   "type": "module",
   "bin": {
     "myclaw": "./myclaw.mjs"
@@ -189,7 +177,7 @@ Now let's install all the dependencies the project needs:
 
 ```bash
 # Runtime dependencies
-npm install @anthropic-ai/sdk openai commander ws zod chalk yaml dotenv eventemitter3 readline @larksuiteoapi/node-sdk
+npm install @mariozechner/pi-ai @mariozechner/pi-agent-core @mariozechner/pi-coding-agent commander ws zod chalk yaml dotenv eventemitter3 readline @larksuiteoapi/node-sdk
 
 # Development dependencies
 npm install -D typescript tsx @types/node @types/ws
@@ -201,8 +189,9 @@ The following table lists each dependency's role and which MyClaw module it corr
 
 | Package | Version | Category | Purpose | Corresponding Module |
 |---------|---------|----------|---------|---------------------|
-| `@anthropic-ai/sdk` | ^0.39.0 | AI | Official Anthropic Claude API SDK | `agent/providers/anthropic.ts` |
-| `openai` | ^4.85.4 | AI | Official OpenAI GPT API SDK | `agent/providers/openai.ts` |
+| `@mariozechner/pi-ai` | ^0.57.1 | AI | LLM abstraction layer (Model, stream, provider auto-discovery) | `agent/model.ts` |
+| `@mariozechner/pi-agent-core` | ^0.57.1 | AI | Agent state machine + agent loop (message management, tool execution cycle) | `agent/runtime.ts` |
+| `@mariozechner/pi-coding-agent` | ^0.57.1 | AI | Coding agent wrapper (built-in tools, Skills, InteractiveMode TUI) | `cli/commands/agent.ts`, `agent/runtime.ts` |
 | `commander` | ^13.1.0 | CLI | Command-line framework for parsing arguments and subcommands | `cli/program.ts` |
 | `ws` | ^8.18.1 | Network | WebSocket client and server library | `gateway/server.ts` |
 | `zod` | ^3.24.2 | Validation | Runtime schema validation for configuration and input | `config/schema.ts` |
@@ -210,7 +199,7 @@ The following table lists each dependency's role and which MyClaw module it corr
 | `yaml` | ^2.7.0 | Config | Parsing and serializing YAML configuration files | `config/loader.ts` |
 | `dotenv` | ^16.4.7 | Config | Loads environment variables from `.env` files (API keys, etc.) | `config/loader.ts` |
 | `eventemitter3` | ^5.0.1 | Architecture | High-performance event emitter for decoupled inter-module communication | `gateway/`, `channels/` |
-| `readline` | ^1.3.0 | UI | Interactive terminal input (for the Terminal channel) | `channels/terminal.ts` |
+| `readline` | ^1.3.0 | UI | Interactive terminal input (for Gateway's Terminal channel) | `channels/terminal.ts` |
 | `@larksuiteoapi/node-sdk` | ^1.59.0 | Channel | Feishu Open Platform SDK | `channels/feishu.ts` |
 
 Development dependencies:

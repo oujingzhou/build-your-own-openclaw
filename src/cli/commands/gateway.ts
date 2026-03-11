@@ -7,9 +7,11 @@
 import type { Command } from "commander";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { getContext } from "../program.js";
 import { startGatewayServer } from "../../gateway/server.js";
 import { getStateDir } from "../../config/index.js";
+import { loadWorkspaceSkills, buildSkillsPrompt } from "../../skills/workspace.js";
 
 function getPidPath(): string {
   return path.join(getStateDir(), "gateway.pid");
@@ -45,11 +47,25 @@ export function registerGatewayCommand(program: Command): void {
       process.on("SIGINT", () => process.exit(0));
       process.on("SIGTERM", () => process.exit(0));
 
+      // Load skills
+      const skillDirs = [
+        path.join(process.cwd(), "skills"),
+        path.join(os.homedir(), ".myclaw", "skills"),
+      ];
+      const skills = loadWorkspaceSkills(skillDirs);
+      const skillsPrompt = buildSkillsPrompt(skills);
+
+      if (skills.length > 0 && ctx.verbose) {
+        console.log(`[skills] Loaded ${skills.length} skill(s): ${skills.map((s) => s.skill.name).join(", ")}`);
+      }
+
       await startGatewayServer({
         config: ctx.config,
         host,
         port,
         verbose: ctx.verbose,
+        skills,
+        skillsPrompt,
       });
     });
 }

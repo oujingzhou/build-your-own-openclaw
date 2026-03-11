@@ -2,11 +2,11 @@
 
 [English](README.en.md) | 中文
 
-**用 ~3,000 行 TypeScript 从零构建一个多通道 AI 助手。**
+**用 ~2,600 行 TypeScript 从零构建一个多通道 AI 助手。**
 
 你是否好奇过 [OpenClaw](https://github.com/anthropics/openclaw) 这样的 AI 助手是怎么同时接入飞书、Telegram 等多个平台的？消息路由、Agent 工具调用循环、通道抽象又是怎么实现的？
 
-本教程通过构建 **MyClaw**（一个 OpenClaw 的简化版）来回答这些问题。10 章教程，每章聚焦一个核心模块，带你从零实现一个可运行的多通道 AI 助手。
+本教程通过构建 **MyClaw**（一个教学用的 OpenClaw 最小实现）来回答这些问题。12 章教程，每章聚焦一个核心模块，带你从零实现一个可运行的多通道 AI 助手。
 
 ### 你将学到什么
 
@@ -15,6 +15,7 @@
 - **消息路由** — 基于规则将不同通道的消息分发到不同 Agent/Provider
 - **配置系统** — Zod Schema 验证 + YAML 配置的工程实践
 - **WebSocket 网关** — 带认证和会话管理的实时通信服务
+- **Skills 系统** — 基于 Markdown 的 prompt 管理，斜杠命令调用
 - **插件架构** — 控制反转（IoC）模式的实际应用
 
 ### 适合谁
@@ -27,7 +28,8 @@
 
 - **多通道** — Terminal + 飞书 + Telegram，统一抽象可轻松扩展
 - **多 LLM** — Anthropic (Claude)、OpenAI (GPT-4o)、OpenRouter (免费模型可用)
-- **Coding Agent** — 内置 7 个工具 (read/write/edit/exec/grep/find/ls)，支持多轮 Tool Use
+- **Coding Agent** — 基于 pi-coding-agent 的内置工具集 (read/write/edit/bash)，支持多轮 Tool Use
+- **Skills 系统** — 通过 SKILL.md 定义技能，`/skill-name` 斜杠命令调用
 - **消息路由** — 规则引擎，灵活映射通道到 Agent
 - **WebSocket 网关** — 统一 API 控制面
 - **插件系统** — 可扩展的运行时插件
@@ -37,7 +39,7 @@
 
 ## 教程章节
 
-本教程共 11 章，每章聚焦一个核心模块。建议按顺序阅读，每章都附有完整的代码实现和设计解析。
+本教程共 12 章，每章聚焦一个核心模块。建议按顺序阅读，每章都附有完整的代码实现和设计解析。
 
 | 章节 | 主题 | 你将学到 | 关键文件 |
 |------|------|----------|----------|
@@ -45,12 +47,13 @@
 | [02](docs/02-cli-framework.md) | CLI 框架 | Commander.js 命令系统、依赖注入 | `src/cli/program.ts`, `src/entry.ts` |
 | [03](docs/03-configuration.md) | 配置系统 | Zod Schema 验证、YAML 配置管理 | `src/config/schema.ts`, `src/config/loader.ts` |
 | [04](docs/04-gateway-server.md) | 网关服务器 | WebSocket 服务、会话管理、认证 | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
-| [05](docs/05-agent-runtime.md) | Agent 运行时 | LLM 抽象、Agent Loop、工具调用 | `src/agent/runtime.ts`, `src/agent/providers/` |
+| [05](docs/05-agent-runtime.md) | Agent 运行时 | LLM 抽象、Agent Loop、InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
 | [06](docs/06-channels.md) | 通道抽象 | 接口设计、EventEmitter、多态 | `src/channels/transport.ts`, `src/channels/terminal.ts` |
 | [07](docs/07-message-routing.md) | 消息路由 | 分层匹配、多 Agent 调度 | `src/routing/router.ts` |
 | [08](docs/08-feishu.md) | 飞书通道 | 外部平台集成、WebSocket 长连接 | `src/channels/feishu.ts` |
 | [08b](docs/08b-telegram.md) | Telegram 通道 | grammY 集成、Long Polling、消息分块 | `src/channels/telegram.ts` |
 | [09](docs/09-plugins.md) | 插件系统 | 控制反转、运行时扩展 | `src/plugins/registry.ts` |
+| [09b](docs/09b-skills.md) | Skills 系统 | SKILL.md 定义、斜杠命令、prompt 管理 | `src/skills/loader.ts`, `src/skills/registry.ts` |
 | [10](docs/10-final.md) | 整合运行 | 端到端调试、完整数据流 | 全部 |
 
 ## 架构概览
@@ -81,11 +84,14 @@ graph TB
     end
 
     subgraph Ch05["Ch.5 Agent 运行时"]
-        AGENT["Agent Runtime"]
-        TOOLS["Tools<br/>read · write · edit · exec<br/>grep · find · ls"]
-        subgraph LLM["LLM 提供者"]
+        AGENT["Agent Runtime<br/>(gateway 路径)"]
+        AGENT_CMD["InteractiveMode<br/>(agent 命令 TUI)"]
+        MODEL["Model Resolution"]
+        PI_MONO["pi-coding-agent<br/>内置工具 + Skills"]
+        subgraph LLM["LLM 提供者 (via pi-ai)"]
             ANTHROPIC["Anthropic"]
             OPENAI["OpenAI"]
+            OPENROUTER["OpenRouter"]
         end
     end
 
@@ -93,13 +99,20 @@ graph TB
         PLUGINS["Plugin Registry"]
     end
 
+    subgraph Ch09b["Ch.9b Skills"]
+        SKILLS["Skill Registry<br/>/translate · /summarize"]
+    end
+
     CONFIG -.-> CMD_AGENT & CMD_GW
-    CMD_AGENT --> TERM
+    CMD_AGENT --> AGENT_CMD
+    AGENT_CMD --> PI_MONO
     CMD_GW --> GW --> Ch06
     Ch06 --> ROUTER --> AGENT
-    AGENT --> LLM
-    AGENT --> TOOLS
+    AGENT --> MODEL --> LLM
+    AGENT --> PI_MONO
     PLUGINS -.-> AGENT
+    SKILLS -.-> ROUTER
+    SKILLS -.-> AGENT
 ```
 
 ## 消息处理流程
@@ -138,6 +151,9 @@ build-your-own-openclaw/
 ├── myclaw.mjs                 # 启动入口（版本检查 + 加载）
 ├── package.json               # 依赖和脚本
 ├── tsconfig.json              # TypeScript 配置
+├── skills/                    # 内置 Skills
+│   ├── translate/SKILL.md     # 翻译 Skill
+│   └── summarize/SKILL.md     # 总结 Skill
 ├── src/
 │   ├── entry.ts               # 主入口
 │   ├── cli/
@@ -158,13 +174,8 @@ build-your-own-openclaw/
 │   │   ├── protocol.ts        # 消息协议定义
 │   │   └── session.ts         # 会话管理
 │   ├── agent/
-│   │   ├── runtime.ts         # Agent 运行时
-│   │   ├── tools.ts           # 内置工具 (read/write/edit/exec/grep/find/ls)
-│   │   └── providers/
-│   │       ├── types.ts       # Provider 接口定义
-│   │       ├── anthropic.ts   # Anthropic (Claude)
-│   │       ├── openai.ts      # OpenAI / OpenRouter
-│   │       └── index.ts       # 导出
+│   │   ├── runtime.ts         # Agent 运行时（gateway 路径）
+│   │   └── model.ts           # Model 解析（auth、registry、model 映射）
 │   ├── channels/
 │   │   ├── transport.ts       # 通道抽象基类
 │   │   ├── terminal.ts        # 终端通道
@@ -173,6 +184,9 @@ build-your-own-openclaw/
 │   │   └── manager.ts         # 通道管理器
 │   ├── routing/
 │   │   └── router.ts          # 消息路由器
+│   ├── skills/
+│   │   ├── loader.ts          # Skill 加载器
+│   │   └── registry.ts        # Skill 注册表
 │   └── plugins/
 │       └── registry.ts        # 插件注册表
 └── docs/                      # 教程文档
@@ -182,10 +196,10 @@ build-your-own-openclaw/
 
 | 特性 | MyClaw（本教程） | 完整版 OpenClaw |
 |------|------------------|----------------|
-| 代码量 | ~3,000 行 | ~921,000 行 |
+| 代码量 | ~2,600 行 | ~921,000 行 |
 | 通道 | 3（Terminal + 飞书 + Telegram） | 23+ |
 | LLM 提供者 | 3（Anthropic + OpenAI + OpenRouter） | 10+ |
-| 工具 | 7 个 Coding Agent 工具 | 50+ Skills, 40+ Extensions |
+| 工具 | pi-coding-agent 内置工具集 | 50+ Skills, 40+ Extensions |
 | 平台 | CLI only | CLI + macOS + iOS + Android |
 | 协议 | 简单 JSON | TypeBox Schema 验证 |
 | 安全 | 基础 Token 认证 | DM 配对、角色控制、操作审批 |

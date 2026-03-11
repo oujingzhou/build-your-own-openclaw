@@ -64,8 +64,9 @@ Key lifecycle stages:
 | File | Purpose |
 | --- | --- |
 | `src/plugins/registry.ts` | Plugin interface definitions (`Plugin`, `PluginContext`), registry implementation (`PluginRegistry`), and example plugins |
-| `src/agent/providers/types.ts` | `AgentTool` interface definition -- the data structure used when plugins register tools |
 | `src/channels/transport.ts` | `Channel` abstract class -- the data structure used when plugins register channels |
+
+**Note**: MyClaw now uses pi-coding-agent's tool system. Plugins that need to register custom tools should use pi-coding-agent's `customTools` parameter instead of the old `AgentTool` interface.
 
 ## Plugin Interface Design
 

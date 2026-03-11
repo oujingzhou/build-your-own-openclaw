@@ -203,7 +203,7 @@ export function buildProgram(): Command {
 
   program
     .name("myclaw")
-    .description("MyClaw - Your personal AI assistant gateway")
+    .description("MyClaw - Your personal AI assistant")
     .version("1.0.0")
     .option("-v, --verbose", "Enable verbose logging", false);
 
@@ -229,7 +229,7 @@ export function buildProgram(): Command {
 ```typescript
 program
   .name("myclaw")
-  .description("MyClaw - Your personal AI assistant gateway")
+  .description("MyClaw - Your personal AI assistant")
   .version("1.0.0")
   .option("-v, --verbose", "Enable verbose logging", false);
 ```
@@ -566,7 +566,7 @@ That's it! **You don't need to modify `entry.ts` or `program.ts`**. The framewor
 | `myclaw doctor` | Diagnostic check, verifies installation and configuration are correct | This chapter |
 | `myclaw onboard` | Guided configuration wizard, interactively generates config file | [Chapter 3](./03-configuration.md) |
 | `myclaw gateway` | Start WebSocket gateway server | [Chapter 4](./04-gateway-server.md) |
-| `myclaw agent` | Terminal interactive AI chat | [Chapter 5](./05-agent-runtime.md) |
+| `myclaw agent` | Terminal interactive AI chat (InteractiveMode TUI: multi-line editor, Markdown rendering, streaming output) | [Chapter 5](./05-agent-runtime.md) |
 | `myclaw message send` | Send a message to a specified channel | [Chapter 7](./07-message-routing.md) |
 
 ---
