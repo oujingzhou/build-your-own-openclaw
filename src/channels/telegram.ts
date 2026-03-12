@@ -21,6 +21,8 @@ export class TelegramChannel extends Channel {
   private router: Router | null = null;
   private config: ChannelConfig;
   private allowedChatIds: Set<number> | null;
+  private messageQueue: Array<() => Promise<void>> = [];
+  private isProcessing = false;
 
   constructor(config: ChannelConfig, botToken: string) {
     super();
@@ -72,24 +74,30 @@ export class TelegramChannel extends Channel {
       // Skip commands (already handled above)
       if (ctx.message.text.startsWith("/")) return;
 
-      try {
-        await this.handleMessage(
-          String(chatId),
-          ctx.from?.id ? String(ctx.from.id) : "unknown",
-          ctx.message.text,
-          router,
-          async (text: string) => {
-            await ctx.reply(text);
-          }
-        );
-      } catch (err) {
-        console.error(
-          chalk.red(
-            `[telegram] Error processing message: ${(err as Error).message}`
-          )
-        );
-        await ctx.reply("Sorry, I encountered an error. Please try again.");
-      }
+      // Queue the message processing to prevent concurrent agent calls
+      this.messageQueue.push(async () => {
+        try {
+          await this.handleMessage(
+            String(chatId),
+            ctx.from?.id ? String(ctx.from.id) : "unknown",
+            ctx.message.text,
+            router,
+            async (text: string) => {
+              await ctx.reply(text);
+            }
+          );
+        } catch (err) {
+          console.error(
+            chalk.red(
+              `[telegram] Error processing message: ${(err as Error).message}`
+            )
+          );
+          await ctx.reply("Sorry, I encountered an error. Please try again.");
+        }
+      });
+
+      // Start processing the queue
+      this.processQueue();
     });
 
     console.log(chalk.dim(`[telegram] Starting bot...`));
@@ -126,6 +134,29 @@ export class TelegramChannel extends Channel {
   private isChatAllowed(chatId: number): boolean {
     if (!this.allowedChatIds) return true;
     return this.allowedChatIds.has(chatId);
+  }
+
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing || this.messageQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessing = true;
+    while (this.messageQueue.length > 0) {
+      const task = this.messageQueue.shift();
+      if (task) {
+        try {
+          await task();
+        } catch (err) {
+          console.error(
+            chalk.red(
+              `[telegram] Error processing queued message: ${(err as Error).message}`
+            )
+          );
+        }
+      }
+    }
+    this.isProcessing = false;
   }
 
   private async handleMessage(

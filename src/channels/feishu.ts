@@ -22,6 +22,8 @@ export class FeishuChannel extends Channel {
   private appId: string;
   private appSecret: string;
   private processedMsgIds = new Set<string>();
+  private messageQueue: Array<() => Promise<void>> = [];
+  private isProcessing = false;
 
   constructor(config: ChannelConfig, appId: string, appSecret: string) {
     super();
@@ -103,6 +105,29 @@ export class FeishuChannel extends Channel {
     });
   }
 
+  private async processQueue(): Promise<void> {
+    if (this.isProcessing || this.messageQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessing = true;
+    while (this.messageQueue.length > 0) {
+      const task = this.messageQueue.shift();
+      if (task) {
+        try {
+          await task();
+        } catch (err) {
+          console.error(
+            chalk.red(
+              `[feishu] Error processing queued message: ${(err as Error).message}`
+            )
+          );
+        }
+      }
+    }
+    this.isProcessing = false;
+  }
+
   private async handleMessage(data: any, router: Router): Promise<void> {
     const message = data.message;
     if (!message) return;
@@ -138,7 +163,7 @@ export class FeishuChannel extends Channel {
 
     if (!text) return;
 
-    // Handle /clear command
+    // Handle /clear command (synchronous, no queueing needed)
     if (text.trim() === "/clear") {
       this.clearSession(chatId);
       await this.client.im.message.create({
@@ -152,33 +177,39 @@ export class FeishuChannel extends Channel {
       return;
     }
 
-    try {
-      const response = await this.routeMessage(router, chatId, senderId, text);
+    // Queue the message processing to prevent concurrent agent calls
+    this.messageQueue.push(async () => {
+      try {
+        const response = await this.routeMessage(router, chatId, senderId, text);
 
-      await this.client.im.message.create({
-        params: { receive_id_type: "chat_id" },
-        data: {
-          receive_id: chatId,
-          msg_type: "text",
-          content: JSON.stringify({ text: response }),
-        },
-      });
-    } catch (err) {
-      console.error(
-        chalk.red(
-          `[feishu] Error processing message: ${(err as Error).message}`
-        )
-      );
-      await this.client.im.message.create({
-        params: { receive_id_type: "chat_id" },
-        data: {
-          receive_id: chatId,
-          msg_type: "text",
-          content: JSON.stringify({
-            text: "Sorry, I encountered an error. Please try again.",
-          }),
-        },
-      });
-    }
+        await this.client.im.message.create({
+          params: { receive_id_type: "chat_id" },
+          data: {
+            receive_id: chatId,
+            msg_type: "text",
+            content: JSON.stringify({ text: response }),
+          },
+        });
+      } catch (err) {
+        console.error(
+          chalk.red(
+            `[feishu] Error processing message: ${(err as Error).message}`
+          )
+        );
+        await this.client.im.message.create({
+          params: { receive_id_type: "chat_id" },
+          data: {
+            receive_id: chatId,
+            msg_type: "text",
+            content: JSON.stringify({
+              text: "Sorry, I encountered an error. Please try again.",
+            }),
+          },
+        });
+      }
+    });
+
+    // Start processing the queue
+    this.processQueue();
   }
 }
