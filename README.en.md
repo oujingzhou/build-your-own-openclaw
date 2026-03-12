@@ -4,37 +4,6 @@ English | [中文](README.zh.md)
 
 **Build a OpenClaw from scratch in ~2,600 lines of TypeScript.**
 
-Ever wondered how AI assistants like [OpenClaw](https://github.com/anthropics/openclaw) connect to multiple platforms — Feishu, Telegram — all at once? How message routing, Agent tool-call loops, and channel abstractions actually work?
-
-This tutorial answers those questions by building **MyClaw**, a minimal teaching implementation of OpenClaw. 12 chapters, each focusing on a core module, guiding you to build a working multi-channel AI assistant from the ground up.
-
-### What You'll Learn
-
-- **Channel abstraction** — How to design a unified interface so one codebase serves Terminal, Feishu, Telegram, and more
-- **Agent runtime** — Complete implementation of LLM calls, Tool Use loops, and conversation history management
-- **Message routing** — Rule-based dispatch of messages from different channels to different Agents/Providers
-- **Configuration system** — Engineering practices with Zod Schema validation + YAML config
-- **WebSocket gateway** — Real-time communication service with authentication and session management
-- **Skills system** — Markdown-based prompt management with slash command invocation
-- **Plugin architecture** — Practical application of the Inversion of Control (IoC) pattern
-
-### Who This Is For
-
-- Developers who want to deeply understand AI assistant / Agent architecture
-- Intermediate developers learning TypeScript engineering practices
-- Engineers building multi-channel messaging gateways for their own projects
-
-## Features
-
-- **Multi-channel** — Terminal + Feishu (Lark) + Telegram, with a unified abstraction for easy extension
-- **Multiple LLMs** — Anthropic (Claude), OpenAI (GPT-4o), OpenRouter (free models available)
-- **Coding Agent** — Built-in tool set from pi-coding-agent (read/write/edit/bash) with multi-round Tool Use
-- **Skills system** — Define skills via SKILL.md, invoke with `/skill-name` slash commands
-- **Message routing** — Rule engine for flexible channel-to-Agent mapping
-- **WebSocket gateway** — Unified API control plane
-- **Plugin system** — Extensible runtime plugins
-- **Batteries included** — `onboard` setup wizard, `doctor` health diagnostics
-
 ---
 
 ## Tutorial Chapters

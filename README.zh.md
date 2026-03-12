@@ -4,37 +4,6 @@
 
 **用 ~2,600 行 TypeScript 从零构建一个OpenClaw。**
 
-你是否好奇过 [OpenClaw](https://github.com/anthropics/openclaw) 这样的 AI 助手是怎么同时接入飞书、Telegram 等多个平台的？消息路由、Agent 工具调用循环、通道抽象又是怎么实现的？
-
-本教程通过构建 **MyClaw**（一个教学用的 OpenClaw 最小实现）来回答这些问题。12 章教程，每章聚焦一个核心模块，带你从零实现一个可运行的多通道 AI 助手。
-
-### 你将学到什么
-
-- **通道抽象** — 如何设计统一接口，让一套代码同时服务 Terminal、飞书、Telegram 等多个平台
-- **Agent 运行时** — LLM 调用、Tool Use 循环、对话历史管理的完整实现
-- **消息路由** — 基于规则将不同通道的消息分发到不同 Agent/Provider
-- **配置系统** — Zod Schema 验证 + YAML 配置的工程实践
-- **WebSocket 网关** — 带认证和会话管理的实时通信服务
-- **Skills 系统** — 基于 Markdown 的 prompt 管理，斜杠命令调用
-- **插件架构** — 控制反转（IoC）模式的实际应用
-
-### 适合谁
-
-- 想深入理解 AI 助手/Agent 架构的开发者
-- 想学习 TypeScript 工程实践的中级开发者
-- 想为自己的项目构建多通道消息网关的工程师
-
-## 特性
-
-- **多通道** — Terminal + 飞书 + Telegram，统一抽象可轻松扩展
-- **多 LLM** — Anthropic (Claude)、OpenAI (GPT-4o)、OpenRouter (免费模型可用)
-- **Coding Agent** — 基于 pi-coding-agent 的内置工具集 (read/write/edit/bash)，支持多轮 Tool Use
-- **Skills 系统** — 通过 SKILL.md 定义技能，`/skill-name` 斜杠命令调用
-- **消息路由** — 规则引擎，灵活映射通道到 Agent
-- **WebSocket 网关** — 统一 API 控制面
-- **插件系统** — 可扩展的运行时插件
-- **开箱即用** — `onboard` 引导配置，`doctor` 健康诊断
-
 ---
 
 ## 教程章节
