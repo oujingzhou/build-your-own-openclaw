@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-**用 ~2,600 行 TypeScript 从零构建一个多通道 AI 助手。**
+**用 ~2,600 行 TypeScript 从零构建一个OpenClaw。**
 
 你是否好奇过 [OpenClaw](https://github.com/anthropics/openclaw) 这样的 AI 助手是怎么同时接入飞书、Telegram 等多个平台的？消息路由、Agent 工具调用循环、通道抽象又是怎么实现的？
 

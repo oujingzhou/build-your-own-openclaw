@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-**Build a multi-channel AI assistant from scratch in ~2,600 lines of TypeScript.**
+**Build a OpenClaw from scratch in ~2,600 lines of TypeScript.**
 
 Ever wondered how AI assistants like [OpenClaw](https://github.com/anthropics/openclaw) connect to multiple platforms — Feishu, Telegram — all at once? How message routing, Agent tool-call loops, and channel abstractions actually work?
 
