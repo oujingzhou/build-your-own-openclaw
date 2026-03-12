@@ -1,6 +1,6 @@
 # Build Your Own OpenClaw
 
-[中文](README.md) | English
+English | [中文](README.zh.md)
 
 **Build a multi-channel AI assistant from scratch in ~2,600 lines of TypeScript.**
 
