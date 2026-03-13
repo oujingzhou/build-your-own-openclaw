@@ -1,6 +1,6 @@
 # Chapter 10: Integration and Running
 
-Congratulations on making it to the final chapter! Over the previous 9 chapters, we built a complete multi-channel AI Agent system from scratch -- **MyClaw**. This is a teaching project designed to help you understand the internal architecture and design philosophy of OpenClaw. Now let's bring all the components together, review how the system works end-to-end, and walk through how to run it in detail.
+Congratulations on making it to the final chapter! Over the previous 9 chapters, we built a complete AI Agent system from scratch -- **MyClaw**. This is a teaching project designed to help you understand the internal architecture and design philosophy of OpenClaw. Now let's bring all the components together, review how the system works end-to-end, and walk through how to run it in detail.
 
 ---
 

@@ -4,12 +4,13 @@
 
 ## 我们要构建什么？
 
-MyClaw 是一个教学项目，目标是带你从零构建一个类似 OpenClaw 的**多通道 AI 助手**。通过亲手实现它，你将深入理解以下核心架构模式：
+MyClaw 是一个教学项目，目标是带你从零构建一个类似 OpenClaw 的**AI 助手**。通过亲手实现它，你将深入理解以下核心架构模式：
 
+- **AI Agent 核心** —— 如何设计一个具备工具调用、上下文管理和多轮对话能力的智能 Agent
 - **AI Provider 抽象层** —— 如何统一对接 Anthropic Claude、OpenAI GPT 等不同 LLM
-- **消息通道系统** —— 如何让 Terminal、飞书、Telegram 等不同渠道共享同一个 AI 后端
+- **消息通道系统** —— 如何让 Terminal、飞书、Telegram 等不同渠道共享同一个 Agent 后端
 - **WebSocket 网关** —— 如何用实时通信协调前后端
-- **插件化架构** —— 如何让系统具备可扩展性
+- **插件化架构** —— 如何通过工具（Tools）机制让 Agent 具备可扩展的能力
 
 整个系统的架构可以用下图概括：
 
@@ -110,7 +111,7 @@ cd build-your-own-myclaw
 {
   "name": "build-your-own-openclaw",
   "version": "1.0.0",
-  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant",
+  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build an AI assistant",
   "type": "module",
   "bin": {
     "myclaw": "./myclaw.mjs"

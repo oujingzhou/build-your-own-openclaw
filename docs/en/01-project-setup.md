@@ -4,12 +4,13 @@
 
 ## What Are We Building?
 
-MyClaw is an educational project that guides you through building a **multi-channel AI assistant** similar to OpenClaw from scratch. By implementing it yourself, you'll gain a deep understanding of the following core architectural patterns:
+MyClaw is an educational project that guides you through building an **AI assistant** similar to OpenClaw from scratch. By implementing it yourself, you'll gain a deep understanding of the following core architectural patterns:
 
+- **AI Agent Core** -- How to design an intelligent Agent with tool calling, context management, and multi-turn conversation capabilities
 - **AI Provider Abstraction Layer** -- How to create a unified interface for different LLMs like Anthropic Claude, OpenAI GPT, and more
-- **Message Channel System** -- How to let different channels such as Terminal, Feishu, and Telegram share the same AI backend
+- **Message Channel System** -- How to let different channels such as Terminal, Feishu, and Telegram share the same Agent backend
 - **WebSocket Gateway** -- How to use real-time communication to coordinate the frontend and backend
-- **Plugin Architecture** -- How to make the system extensible
+- **Plugin Architecture** -- How to make the Agent extensible through a Tools mechanism
 
 The overall system architecture can be summarized in the diagram below:
 
@@ -110,7 +111,7 @@ Then create `package.json` with the following content:
 {
   "name": "build-your-own-openclaw",
   "version": "1.0.0",
-  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build a multi-channel AI assistant",
+  "description": "Build Your Own OpenClaw - A step-by-step tutorial to build an AI assistant",
   "type": "module",
   "bin": {
     "myclaw": "./myclaw.mjs"
