@@ -1,8 +1,8 @@
-# 第三章：配置系统
+# 第四章：配置系统
 
 > 对应源文件：`src/config/schema.ts`、`src/config/loader.ts`、`src/config/index.ts`、`src/cli/commands/onboard.ts`
 
-## 3.1 概述
+## 4.1 概述
 
 MyClaw 的配置系统是整个应用的"中枢神经"。它决定了：
 
@@ -19,7 +19,7 @@ MyClaw 的配置系统是整个应用的"中枢神经"。它决定了：
 2. **Zod 运行时验证** —— 确保配置在运行时也是类型安全的，自动提供友好的错误提示
 3. **Secret 解析** —— 敏感信息（API Key、Token）支持直接填写或环境变量引用，避免明文泄露
 
-## 3.2 为什么使用 Zod 做运行时 Schema 验证？
+## 4.2 为什么使用 Zod 做运行时 Schema 验证？
 
 在传统的 TypeScript 项目中，类型检查只在编译期生效。但配置文件是运行时加载的——用户手写的 YAML 完全可能包含拼写错误、类型错误、缺失字段等问题。TypeScript 的类型系统在这里无能为力。
 
@@ -51,7 +51,7 @@ flowchart TD
 
 **关键洞察**：Zod 让我们用一套代码同时解决了"运行时验证"和"编译期类型推导"两个问题。传统方案需要写两遍——一遍 interface，一遍 validation 函数——而 Zod 把它们统一了。
 
-## 3.3 Provider Schema：LLM 提供商配置
+## 4.3 Provider Schema：LLM 提供商配置
 
 `ProviderConfigSchema` 定义了 LLM 提供商的配置结构。MyClaw 支持三种提供商类型：Anthropic、OpenAI 和 OpenRouter。
 
@@ -115,7 +115,7 @@ providers:
     model: stepfun/step-3.5-flash:free
 ```
 
-## 3.4 Channel Schema：通道配置
+## 4.4 Channel Schema：通道配置
 
 `ChannelConfigSchema` 定义了消息通道的配置。通道是用户与 MyClaw 交互的入口——终端对话、飞书机器人、Telegram Bot 等。
 
@@ -160,7 +160,7 @@ export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
 
 **设计要点**：飞书通道有 4 个专属字段（`appId`/`appIdEnv`/`appSecret`/`appSecretEnv`），Telegram 通道有 3 个专属字段（`botToken`/`botTokenEnv`/`allowedChatIds`），都遵循与 Provider 相同的"直接值 vs 环境变量"模式。Terminal 通道不需要任何认证字段，只需 `id`、`type` 和可选的 `greeting`。
 
-## 3.5 路由规则与插件配置
+## 4.5 路由规则与插件配置
 
 ### RouteRuleSchema：路由规则
 
@@ -214,7 +214,7 @@ export type PluginConfig = z.infer<typeof PluginConfigSchema>;
 
 **设计要点**：`z.record(z.unknown())` 是一个非常聪明的选择——它允许每个插件自由定义自己的配置格式，而不需要在核心 Schema 中穷举所有插件的字段。这是一种"开放式 Schema"的设计模式。
 
-## 3.6 顶层 OpenClawConfigSchema
+## 4.6 顶层 OpenClawConfigSchema
 
 所有子 Schema 最终汇聚到顶层配置 Schema 中：
 
@@ -276,7 +276,7 @@ export type OpenClawConfig = z.infer<typeof OpenClawConfigSchema>;
 
 **两个必填字段的意义**：`providers` 和 `defaultProvider` 是仅有的两个必填字段。没有 LLM 提供商，MyClaw 就无法工作——这是最基本的要求。其他所有字段都有合理的默认值，确保最小配置也能正常运行。
 
-## 3.7 默认配置：createDefaultConfig()
+## 4.7 默认配置：createDefaultConfig()
 
 当配置文件不存在时，MyClaw 会使用默认配置。`createDefaultConfig()` 函数返回一个开箱即用的配置对象：
 
@@ -326,7 +326,7 @@ export function createDefaultConfig(): OpenClawConfig {
 - **通配符路由**：`channel: "*"` 将所有消息路由到默认 Provider
 - **工具审批开启**：`toolApproval: true`，安全第一
 
-## 3.8 配置加载器：loader.ts 详解
+## 4.8 配置加载器：loader.ts 详解
 
 配置加载器是 `schema.ts` 和实际文件系统之间的桥梁。它负责读取 YAML 文件、调用 Zod 验证、写入配置、解析 Secret。
 
@@ -479,7 +479,7 @@ export function loadConfigSnapshot(): Readonly<OpenClawConfig> {
 
 `Object.freeze()` 冻结对象，使其不可修改。适用于需要"读取一次、到处使用"的场景，防止运行时意外修改配置。
 
-## 3.9 统一导出：index.ts
+## 4.9 统一导出：index.ts
 
 ```typescript
 // src/config/index.ts
@@ -499,7 +499,7 @@ export {
 
 这是 TypeScript 项目中常见的"barrel export"模式——把模块内部的多个文件统一通过 `index.ts` 对外暴露。外部代码只需 `import { loadConfig } from "../../config/index.js"` 即可。
 
-## 3.10 Onboard 引导向导
+## 4.10 Onboard 引导向导
 
 `onboard` 命令提供了一个交互式的初始化向导，引导用户一步步生成配置文件。这是新用户首次使用 MyClaw 时最推荐的入口。
 
@@ -628,7 +628,7 @@ Next steps:
 3. **智能 Secret 处理**：如果用户直接输入了 API Key，就清除 `apiKeyEnv` 引用，避免冲突
 4. **飞书通道延迟配置**：只有用户明确选择 `y` 才添加飞书配置，保持最小配置原则
 
-## 3.11 完整示例 myclaw.yaml（带注释）
+## 4.11 完整示例 myclaw.yaml（带注释）
 
 ```yaml
 # ~/.myclaw/myclaw.yaml
@@ -726,7 +726,7 @@ agent:
   toolApproval: true         # 执行工具前是否需要用户确认
 ```
 
-## 3.12 如何自定义配置
+## 4.12 如何自定义配置
 
 ### 最小配置
 
@@ -790,4 +790,4 @@ MYCLAW_STATE_DIR=/tmp/myclaw-test myclaw agent
 
 ---
 
-**下一章**：[网关服务器](./04-gateway-server.md) —— WebSocket 控制面
+**下一章**：[网关服务器](./05-gateway-server.md) —— WebSocket 控制面

@@ -1,4 +1,4 @@
-# 第四章：网关服务器
+# 第五章：网关服务器
 
 > 对应源文件：`src/gateway/server.ts`, `src/gateway/protocol.ts`, `src/gateway/session.ts`
 
@@ -882,4 +882,4 @@ Connected (press CTRL+C to quit)
 
 ---
 
-**下一章**：[Agent 运行时](./05-agent-runtime.md) —— MyClaw 的大脑
+**下一章**：[通道抽象](./06-channels.md) —— 让 MyClaw 连接任何消息平台

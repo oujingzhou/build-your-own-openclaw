@@ -1,4 +1,4 @@
-# 第二章：CLI 框架
+# 第三章：CLI 框架
 
 > 对应源文件：`src/entry.ts`, `src/cli/program.ts`, `src/cli/register.ts`, `src/cli/commands/doctor.ts`
 
@@ -564,9 +564,9 @@ npx tsx src/entry.ts status       # 运行你的新命令
 | 命令 | 功能 | 章节 |
 |------|------|------|
 | `myclaw doctor` | 诊断检查，验证安装和配置是否正确 | 本章 |
-| `myclaw onboard` | 引导配置向导，交互式生成配置文件 | [第3章](./03-configuration.md) |
-| `myclaw gateway` | 启动 WebSocket 网关服务 | [第4章](./04-gateway-server.md) |
-| `myclaw agent` | 终端交互式 AI 聊天（InteractiveMode TUI：多行编辑器、Markdown 渲染、流式输出） | [第5章](./05-agent-runtime.md) |
+| `myclaw onboard` | 引导配置向导，交互式生成配置文件 | [第4章](./04-configuration.md) |
+| `myclaw gateway` | 启动 WebSocket 网关服务 | [第5章](./05-gateway-server.md) |
+| `myclaw agent` | 终端交互式 AI 聊天（InteractiveMode TUI：多行编辑器、Markdown 渲染、流式输出） | [第2章](./02-agent-runtime.md) |
 | `myclaw message send` | 向指定通道发送消息 | [第7章](./07-message-routing.md) |
 
 ---
@@ -616,4 +616,4 @@ npx tsx src/entry.ts gateway --help
 
 ---
 
-**下一章**：[配置系统](./03-configuration.md) —— YAML 配置文件 + Zod Schema 验证，让配置既灵活又类型安全。
+**下一章**：[配置系统](./04-configuration.md) —— YAML 配置文件 + Zod Schema 验证，让配置既灵活又类型安全。

@@ -1,4 +1,4 @@
-# Chapter 2: CLI Framework
+# Chapter 3: CLI Framework
 
 > Corresponding source files: `src/entry.ts`, `src/cli/program.ts`, `src/cli/register.ts`, `src/cli/commands/doctor.ts`
 

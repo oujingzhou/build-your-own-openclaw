@@ -1,4 +1,4 @@
-# Chapter 8b: Telegram 通道 (Telegram Channel)
+# 第八章b：Telegram 通道 (Telegram Channel)
 
 在上一章中，我们实现了飞书通道，让 MyClaw 可以在飞书中与用户对话。本章我们将实现另一个热门平台的集成——**Telegram 通道**，使用 [grammY](https://grammy.dev/) 库让 MyClaw 变成一个 Telegram Bot。
 

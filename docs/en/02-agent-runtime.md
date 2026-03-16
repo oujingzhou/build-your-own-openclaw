@@ -1,4 +1,4 @@
-# Chapter 5: Agent Runtime -- The "Brain" of MyClaw
+# Chapter 2: Agent Runtime -- The "Brain" of MyClaw
 
 > Corresponding source files: `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts`
 
@@ -23,7 +23,7 @@ In this chapter, we will understand the following core mechanisms:
 
 ---
 
-## 5.1 Architecture Overview
+## 2.1 Architecture Overview
 
 MyClaw has **two paths** connecting to pi-mono's Agent Session:
 
@@ -73,7 +73,7 @@ MyClaw needs only ~100 lines of thin wrapper code to get full agent capabilities
 
 ---
 
-## 5.2 Model Resolution (`src/agent/model.ts`)
+## 2.2 Model Resolution (`src/agent/model.ts`)
 
 MyClaw's configuration uses `ProviderConfig` (type, API Key, model name), which needs to be mapped to pi-ai's `Model<Api>` object:
 
@@ -128,7 +128,7 @@ export function resolveModel(
 
 ---
 
-## 5.3 Agent Command (`src/cli/commands/agent.ts`) — InteractiveMode
+## 2.3 Agent Command (`src/cli/commands/agent.ts`) — InteractiveMode
 
 The `myclaw agent` command uses pi-coding-agent's `InteractiveMode` directly, providing a full terminal TUI experience.
 
@@ -177,7 +177,7 @@ await mode.run();
 
 ---
 
-## 5.4 Agent Runtime (`src/agent/runtime.ts`) — Gateway Path
+## 2.4 Agent Runtime (`src/agent/runtime.ts`) — Gateway Path
 
 `AgentRuntime` is the bridge for the **gateway command**, converting API requests into agent calls and extracting plain text responses.
 
@@ -260,7 +260,7 @@ pi-agent-core stores message content as **block arrays**, not plain strings:
 
 ---
 
-## 5.5 System Prompt
+## 2.5 System Prompt
 
 The system prompt is concise because tool documentation is managed by pi-coding-agent automatically.
 
@@ -291,7 +291,7 @@ Note: No need to manually list tool descriptions (`read`, `write`, `edit`, etc.)
 
 ---
 
-## 5.6 Tool System
+## 2.6 Tool System
 
 MyClaw does not define its own tools. pi-coding-agent's `createAgentSession` includes these built-in tools by default:
 

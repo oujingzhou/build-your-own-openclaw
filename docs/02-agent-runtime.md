@@ -1,4 +1,4 @@
-# 第五章：Agent 运行时 -- MyClaw 的"大脑"
+# 第二章：Agent 运行时 -- MyClaw 的"大脑"
 
 > 对应源文件：`src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts`
 
@@ -23,7 +23,7 @@ MyClaw 只保留自己的特色模块（channels、routing、gateway、CLI），
 
 ---
 
-## 5.1 架构总览
+## 2.1 架构总览
 
 MyClaw 有**两条路径**连接到 pi-mono 的 Agent Session：
 
@@ -73,7 +73,7 @@ MyClaw 只需 ~100 行薄封装代码，即可获得完整的 agent 能力。
 
 ---
 
-## 5.2 Model 解析（`src/agent/model.ts`）
+## 2.2 Model 解析（`src/agent/model.ts`）
 
 MyClaw 的配置使用 `ProviderConfig`（类型、API Key、模型名），需要映射到 pi-ai 的 `Model<Api>` 对象：
 
@@ -134,7 +134,7 @@ export function resolveModel(
 
 ---
 
-## 5.3 Agent 命令（`src/cli/commands/agent.ts`）— InteractiveMode
+## 2.3 Agent 命令（`src/cli/commands/agent.ts`）— InteractiveMode
 
 `myclaw agent` 命令直接使用 pi-coding-agent 的 `InteractiveMode`，获得完整的终端 TUI 体验。
 
@@ -183,7 +183,7 @@ await mode.run();
 
 ---
 
-## 5.4 Agent Runtime（`src/agent/runtime.ts`）— Gateway 路径
+## 2.4 Agent Runtime（`src/agent/runtime.ts`）— Gateway 路径
 
 `AgentRuntime` 是 **gateway 命令**的桥梁，将 API 请求转化为 agent 调用并提取纯文本返回。
 
@@ -281,7 +281,7 @@ function extractText(content, out) {
 
 ---
 
-## 5.5 系统提示词
+## 2.5 系统提示词
 
 系统提示词很简洁，因为工具文档由 pi-coding-agent 自动管理。
 
@@ -316,7 +316,7 @@ export function buildSystemPrompt(config, providerConfig, skillsPrompt?) {
 
 ---
 
-## 5.6 工具系统
+## 2.6 工具系统
 
 MyClaw 不自己定义工具。pi-coding-agent 的 `createAgentSession` 默认包含以下内置工具：
 
@@ -346,7 +346,7 @@ const { session } = await createAgentSession({
 
 ---
 
-## 5.7 Provider 支持
+## 2.7 Provider 支持
 
 pi-ai 通过 `Model<Api>` 类型统一了不同提供商的差异：
 
@@ -376,4 +376,4 @@ MyClaw 只需在 `resolveModel()` 中正确设置 `api` 字段，pi-ai 的 `stre
 
 ---
 
-**下一章**：[通道抽象](./06-channels.md) —— 让 MyClaw 连接任何消息平台
+**下一章**：[CLI 框架](./03-cli-framework.md) —— 构建命令行骨架

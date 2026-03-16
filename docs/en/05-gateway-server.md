@@ -1,4 +1,4 @@
-# Chapter 4: Gateway Server
+# Chapter 5: Gateway Server
 
 > Corresponding source files: `src/gateway/server.ts`, `src/gateway/protocol.ts`, `src/gateway/session.ts`
 

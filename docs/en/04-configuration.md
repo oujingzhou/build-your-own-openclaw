@@ -1,8 +1,8 @@
-# Chapter 3: Configuration System
+# Chapter 4: Configuration System
 
 > Corresponding source files: `src/config/schema.ts`, `src/config/loader.ts`, `src/config/index.ts`, `src/cli/commands/onboard.ts`
 
-## 3.1 Overview
+## 4.1 Overview
 
 MyClaw's configuration system is the "central nervous system" of the entire application. It determines:
 
@@ -19,7 +19,7 @@ The configuration file is stored at `~/.myclaw/myclaw.yaml` in YAML format — h
 2. **Zod runtime validation** — Ensures configuration is type-safe at runtime, with automatic user-friendly error messages
 3. **Secret resolution** — Sensitive information (API keys, tokens) can be provided directly or via environment variable references, avoiding plaintext exposure
 
-## 3.2 Why Use Zod for Runtime Schema Validation?
+## 4.2 Why Use Zod for Runtime Schema Validation?
 
 In traditional TypeScript projects, type checking only works at compile time. But configuration files are loaded at runtime — hand-written YAML can easily contain typos, type errors, missing fields, and other issues. TypeScript's type system is powerless here.
 
@@ -51,7 +51,7 @@ flowchart TD
 
 **Key insight**: Zod lets us solve both "runtime validation" and "compile-time type inference" with a single piece of code. Traditional approaches require writing things twice — once as an interface, once as a validation function — but Zod unifies them.
 
-## 3.3 Provider Schema: LLM Provider Configuration
+## 4.3 Provider Schema: LLM Provider Configuration
 
 `ProviderConfigSchema` defines the configuration structure for LLM providers. MyClaw supports three provider types: Anthropic, OpenAI, and OpenRouter.
 
@@ -115,7 +115,7 @@ providers:
     model: stepfun/step-3.5-flash:free
 ```
 
-## 3.4 Channel Schema: Channel Configuration
+## 4.4 Channel Schema: Channel Configuration
 
 `ChannelConfigSchema` defines the configuration for messaging channels. Channels are the entry points for users to interact with MyClaw — terminal conversations, Feishu bots, Telegram bots, etc.
 
@@ -160,7 +160,7 @@ export type ChannelConfig = z.infer<typeof ChannelConfigSchema>;
 
 **Design note**: The Feishu channel has 4 dedicated fields (`appId`/`appIdEnv`/`appSecret`/`appSecretEnv`), the Telegram channel has 3 dedicated fields (`botToken`/`botTokenEnv`/`allowedChatIds`), all following the same "direct value vs. environment variable" pattern as Provider. The Terminal channel doesn't need any authentication fields — just `id`, `type`, and an optional `greeting`.
 
-## 3.5 Routing Rules and Plugin Configuration
+## 4.5 Routing Rules and Plugin Configuration
 
 ### RouteRuleSchema: Routing Rules
 
@@ -214,7 +214,7 @@ export type PluginConfig = z.infer<typeof PluginConfigSchema>;
 
 **Design note**: `z.record(z.unknown())` is a very clever choice — it allows each plugin to freely define its own configuration format without having to enumerate every plugin's fields in the core Schema. This is an "open schema" design pattern.
 
-## 3.6 Top-Level OpenClawConfigSchema
+## 4.6 Top-Level OpenClawConfigSchema
 
 All sub-schemas ultimately converge into the top-level configuration schema:
 
@@ -276,7 +276,7 @@ Let's use a table to understand each top-level field:
 
 **Significance of the two required fields**: `providers` and `defaultProvider` are the only two required fields. Without an LLM provider, MyClaw simply cannot work — this is the most basic requirement. All other fields have sensible defaults, ensuring that even a minimal configuration can run properly.
 
-## 3.7 Default Configuration: createDefaultConfig()
+## 4.7 Default Configuration: createDefaultConfig()
 
 When no configuration file exists, MyClaw uses a default configuration. The `createDefaultConfig()` function returns a ready-to-use configuration object:
 
@@ -326,7 +326,7 @@ export function createDefaultConfig(): OpenClawConfig {
 - **Wildcard routing**: `channel: "*"` routes all messages to the default Provider
 - **Tool approval enabled**: `toolApproval: true`, safety first
 
-## 3.8 Configuration Loader: loader.ts Deep Dive
+## 4.8 Configuration Loader: loader.ts Deep Dive
 
 The configuration loader is the bridge between `schema.ts` and the actual file system. It handles reading the YAML file, invoking Zod validation, writing configuration, and resolving secrets.
 
@@ -479,7 +479,7 @@ export function loadConfigSnapshot(): Readonly<OpenClawConfig> {
 
 `Object.freeze()` freezes the object, making it immutable. This is suitable for "read once, use everywhere" scenarios, preventing accidental runtime modifications to the configuration.
 
-## 3.9 Unified Exports: index.ts
+## 4.9 Unified Exports: index.ts
 
 ```typescript
 // src/config/index.ts
@@ -499,7 +499,7 @@ export {
 
 This is the common "barrel export" pattern in TypeScript projects — exposing multiple internal files through a single `index.ts`. External code only needs `import { loadConfig } from "../../config/index.js"`.
 
-## 3.10 Onboard Setup Wizard
+## 4.10 Onboard Setup Wizard
 
 The `onboard` command provides an interactive setup wizard that guides users step by step to generate a configuration file. This is the recommended entry point for new users running MyClaw for the first time.
 
@@ -628,7 +628,7 @@ Next steps:
 3. **Smart secret handling**: If the user inputs an API key directly, the `apiKeyEnv` reference is cleared to avoid conflicts
 4. **Deferred Feishu channel configuration**: Feishu config is only added when the user explicitly selects `y`, maintaining the minimal configuration principle
 
-## 3.11 Complete myclaw.yaml Example (with Comments)
+## 4.11 Complete myclaw.yaml Example (with Comments)
 
 ```yaml
 # ~/.myclaw/myclaw.yaml
@@ -726,7 +726,7 @@ agent:
   toolApproval: true         # Whether user confirmation is required before executing tools
 ```
 
-## 3.12 How to Customize Configuration
+## 4.12 How to Customize Configuration
 
 ### Minimal Configuration
 
