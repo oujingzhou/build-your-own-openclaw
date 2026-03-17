@@ -13,10 +13,10 @@
 | 章节 | 主题 | 你将学到 | 关键文件 |
 |------|------|----------|----------|
 | [01](docs/01-project-setup.md) | 项目初始化 | TypeScript + ESM 项目搭建 | `package.json`, `tsconfig.json`, `myclaw.mjs` |
-| [02](docs/02-cli-framework.md) | CLI 框架 | Commander.js 命令系统、依赖注入 | `src/cli/program.ts`, `src/entry.ts` |
-| [03](docs/03-configuration.md) | 配置系统 | Zod Schema 验证、YAML 配置管理 | `src/config/schema.ts`, `src/config/loader.ts` |
-| [04](docs/04-gateway-server.md) | 网关服务器 | WebSocket 服务、会话管理、认证 | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
-| [05](docs/05-agent-runtime.md) | Agent 运行时 | LLM 抽象、Agent Loop、InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
+| [02](docs/02-agent-runtime.md) | Agent 运行时 | LLM 抽象、Agent Loop、InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
+| [03](docs/03-cli-framework.md) | CLI 框架 | Commander.js 命令系统、依赖注入 | `src/cli/program.ts`, `src/entry.ts` |
+| [04](docs/04-configuration.md) | 配置系统 | Zod Schema 验证、YAML 配置管理 | `src/config/schema.ts`, `src/config/loader.ts` |
+| [05](docs/05-gateway-server.md) | 网关服务器 | WebSocket 服务、会话管理、认证 | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
 | [06](docs/06-channels.md) | 通道抽象 | 接口设计、EventEmitter、多态 | `src/channels/transport.ts`, `src/channels/terminal.ts` |
 | [07](docs/07-message-routing.md) | 消息路由 | 分层匹配、多 Agent 调度 | `src/routing/router.ts` |
 | [08](docs/08-feishu.md) | 飞书通道 | 外部平台集成、WebSocket 长连接 | `src/channels/feishu.ts` |

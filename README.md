@@ -11,10 +11,10 @@ This tutorial has 12 chapters, each focusing on a core module. It's recommended 
 | Chapter | Topic | What You'll Learn | Key Files |
 |---------|-------|-------------------|-----------|
 | [01](docs/en/01-project-setup.md) | Project Setup | TypeScript + ESM project scaffolding | `package.json`, `tsconfig.json`, `myclaw.mjs` |
-| [02](docs/en/02-cli-framework.md) | CLI Framework | Commander.js commands, dependency injection | `src/cli/program.ts`, `src/entry.ts` |
-| [03](docs/en/03-configuration.md) | Configuration | Zod Schema validation, YAML config | `src/config/schema.ts`, `src/config/loader.ts` |
-| [04](docs/en/04-gateway-server.md) | Gateway Server | WebSocket server, session management, auth | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
-| [05](docs/en/05-agent-runtime.md) | Agent Runtime | LLM abstraction, Agent Loop, InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
+| [02](docs/en/02-agent-runtime.md) | Agent Runtime | LLM abstraction, Agent Loop, InteractiveMode TUI | `src/agent/runtime.ts`, `src/agent/model.ts`, `src/cli/commands/agent.ts` |
+| [03](docs/en/03-cli-framework.md) | CLI Framework | Commander.js commands, dependency injection | `src/cli/program.ts`, `src/entry.ts` |
+| [04](docs/en/04-configuration.md) | Configuration | Zod Schema validation, YAML config | `src/config/schema.ts`, `src/config/loader.ts` |
+| [05](docs/en/05-gateway-server.md) | Gateway Server | WebSocket server, session management, auth | `src/gateway/server.ts`, `src/gateway/protocol.ts` |
 | [06](docs/en/06-channels.md) | Channel Abstraction | Interface design, EventEmitter, polymorphism | `src/channels/transport.ts`, `src/channels/terminal.ts` |
 | [07](docs/en/07-message-routing.md) | Message Routing | Layered matching, multi-Agent dispatch | `src/routing/router.ts` |
 | [08](docs/en/08-feishu.md) | Feishu Channel | External platform integration, WebSocket | `src/channels/feishu.ts` |
