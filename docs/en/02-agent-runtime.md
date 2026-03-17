@@ -319,4 +319,4 @@ In this chapter, we explored the Agent Runtime:
 
 ---
 
-**Next Chapter**: [Channel Abstraction](./06-channels.md) -- Connecting MyClaw to Any Messaging Platform
+**Next Chapter**: [CLI Framework](./03-cli-framework.md) -- Building the Command Line Skeleton

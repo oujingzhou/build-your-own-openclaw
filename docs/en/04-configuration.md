@@ -790,4 +790,4 @@ MYCLAW_STATE_DIR=/tmp/myclaw-test myclaw agent
 
 ---
 
-**Next chapter**: [Gateway Server](./04-gateway-server.md) — The WebSocket Control Plane
+**Next chapter**: [Gateway Server](./05-gateway-server.md) — The WebSocket Control Plane

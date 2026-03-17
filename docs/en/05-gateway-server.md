@@ -883,4 +883,4 @@ Key takeaways:
 
 ---
 
-**Next chapter**: [Agent Runtime](./05-agent-runtime.md) -- The Brain of MyClaw
+**Next chapter**: [Channel Abstraction](./06-channels.md) -- Connecting MyClaw to Any Messaging Platform

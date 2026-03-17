@@ -564,9 +564,9 @@ That's it! **You don't need to modify `entry.ts` or `program.ts`**. The framewor
 | Command | Function | Chapter |
 |------|------|------|
 | `myclaw doctor` | Diagnostic check, verifies installation and configuration are correct | This chapter |
-| `myclaw onboard` | Guided configuration wizard, interactively generates config file | [Chapter 3](./03-configuration.md) |
-| `myclaw gateway` | Start WebSocket gateway server | [Chapter 4](./04-gateway-server.md) |
-| `myclaw agent` | Terminal interactive AI chat (InteractiveMode TUI: multi-line editor, Markdown rendering, streaming output) | [Chapter 5](./05-agent-runtime.md) |
+| `myclaw onboard` | Guided configuration wizard, interactively generates config file | [Chapter 4](./04-configuration.md) |
+| `myclaw gateway` | Start WebSocket gateway server | [Chapter 5](./05-gateway-server.md) |
+| `myclaw agent` | Terminal interactive AI chat (InteractiveMode TUI: multi-line editor, Markdown rendering, streaming output) | [Chapter 2](./02-agent-runtime.md) |
 | `myclaw message send` | Send a message to a specified channel | [Chapter 7](./07-message-routing.md) |
 
 ---
@@ -616,4 +616,4 @@ These patterns may seem simple, but together they form an extensible, testable C
 
 ---
 
-**Next chapter**: [Configuration System](./03-configuration.md) -- YAML configuration files + Zod Schema validation, making configuration both flexible and type-safe.
+**Next chapter**: [Configuration System](./04-configuration.md) -- YAML configuration files + Zod Schema validation, making configuration both flexible and type-safe.

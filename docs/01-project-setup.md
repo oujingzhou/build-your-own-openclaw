@@ -514,4 +514,4 @@ graph LR
 
 ---
 
-**下一章**：[CLI 框架](./02-cli-framework.md) —— 用 Commander.js 构建命令行界面，实现 `myclaw gateway`、`myclaw agent`、`myclaw doctor` 等子命令
+**下一章**：[CLI 框架](./03-cli-framework.md) —— 用 Commander.js 构建命令行界面，实现 `myclaw gateway`、`myclaw agent`、`myclaw doctor` 等子命令

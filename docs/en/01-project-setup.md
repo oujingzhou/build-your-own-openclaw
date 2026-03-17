@@ -514,4 +514,4 @@ These patterns come directly from OpenClaw's design practices and are widely ado
 
 ---
 
-**Next chapter**: [CLI Framework](./02-cli-framework.md) -- Build the command-line interface with Commander.js, implementing subcommands like `myclaw gateway`, `myclaw agent`, `myclaw doctor`, and more
+**Next chapter**: [CLI Framework](./03-cli-framework.md) -- Build the command-line interface with Commander.js, implementing subcommands like `myclaw gateway`, `myclaw agent`, `myclaw doctor`, and more
