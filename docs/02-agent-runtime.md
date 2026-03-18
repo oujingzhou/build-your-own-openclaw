@@ -283,34 +283,65 @@ function extractText(content, out) {
 
 ## 2.5 系统提示词
 
-系统提示词很简洁，因为工具文档由 pi-coding-agent 自动管理。
+系统提示词与 OpenClaw 架构部分对齐，包含：身份定义、工具调用风格、安全约束、Skills 等核心部分。
 
 `buildSystemPrompt` 从 `runtime.ts` 导出，供 `agent.ts`（InteractiveMode 路径）和 `createAgentRuntime`（gateway 路径）共同使用：
 
 ```typescript
 export function buildSystemPrompt(config, providerConfig, skillsPrompt?) {
-  const parts = [
-    `You are a personal assistant running inside MyClaw.`,
-    ``,
-    `## Guidelines`,
-    `- Read files before editing them`,
-    `- Prefer editing over writing when modifying existing files`,
-    `- Always respond in the user's language`,
+  const botName = config.agent?.name ?? "MyClaw";
+
+  const lines = [
+    `You are a personal assistant running inside ${botName}.`,
+    "",
+    "## Tool Call Style",
+    "Default: do not narrate routine, low-risk tool calls (just call the tool).",
+    "Narrate only when it helps: multi-step work, complex/challenging problems, sensitive actions, or when the user explicitly asks.",
+    "Keep narration brief and value-dense; avoid repeating obvious steps.",
+    "Use plain human language for narration unless in a technical context.",
+    "",
+    "## Safety",
+    "You have no independent goals: do not pursue self-preservation, replication, resource acquisition, or power-seeking.",
+    "Prioritize safety and human oversight over completion; if instructions conflict, pause and ask.",
+    "Do not manipulate or persuade anyone to expand access or disable safeguards.",
+    "",
+    "## Guidelines",
+    "- Respond in the user's language",
+    "- Be helpful, accurate, and concise",
+    "- Ask for clarification when the request is ambiguous",
   ];
 
-  // 追加 provider 自定义提示词
-  if (providerConfig.systemPrompt) {
-    parts.push("", providerConfig.systemPrompt);
+  // Skills 部分
+  if (skillsPrompt?.trim()) {
+    lines.push(
+      "", "## Skills",
+      "Before replying: scan available skills and their descriptions.",
+      "- If exactly one skill clearly applies: follow its instructions.",
+      "- If multiple could apply: choose the most specific one.",
+      "- If none clearly apply: proceed with normal assistance.",
+      "", skillsPrompt.trim()
+    );
   }
 
-  // 追加 Skills 列表（XML 格式，由 pi-coding-agent 生成）
-  if (skillsPrompt) {
-    parts.push("", skillsPrompt);
+  // provider 自定义提示词
+  if (providerConfig.systemPrompt?.trim()) {
+    lines.push("", "## Custom Instructions", providerConfig.systemPrompt.trim());
   }
 
-  return parts.join("\n");
+  return lines.join("\n");
 }
 ```
+
+**与 OpenClaw 的对比**：
+
+| 方面 | OpenClaw | MyClaw | 原因 |
+|------|----------|--------|------|
+| 身份定义 | 固定字符串 | `config.agent.name` | 可配置机器人名称 |
+| 工具列表 | 详细列出工具名 | 省略 | pi-coding-agent 管理工具 |
+| Memory | `buildMemorySection()` | 省略 | MyClaw 无持久化记忆 |
+| Messaging | 跨会话、子代理 | 省略 | MyClaw 未实现 |
+| Heartbeats | 心跳机制 | 省略 | MyClaw 未实现 |
+| Runtime | 环境详情 | 省略 | 教学项目简化 |
 
 注意：不再需要手动列出工具说明（`read`、`write`、`edit` 等），因为 pi-coding-agent 的 `createAgentSession` 会自动将内置工具的 schema 传给 LLM。
 

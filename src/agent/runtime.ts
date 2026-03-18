@@ -15,9 +15,6 @@
  */
 
 import chalk from "chalk";
-import { streamSimple } from "@mariozechner/pi-ai";
-import type { Api, Model } from "@mariozechner/pi-ai";
-import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import {
   createAgentSession,
   SessionManager,
@@ -169,28 +166,56 @@ function extractText(content: unknown, out: string[]): void {
 
 /**
  * Build the default system prompt.
+ *
+ * Partially aligned with OpenClaw's system prompt architecture:
+ * - Identity + Tool Call Style + Safety + Skills
+ * - Omits: Tooling list (pi-coding-agent manages), Memory, Messaging, Heartbeats, Runtime details
  */
 export function buildSystemPrompt(
   config: OpenClawConfig,
   providerConfig: ProviderConfig,
   skillsPrompt?: string,
 ): string {
-  const parts = [
-    `You are a personal assistant running inside MyClaw.`,
-    ``,
-    `## Guidelines`,
-    `- Read files before editing them`,
-    `- Prefer editing over writing when modifying existing files`,
-    `- Always respond in the user's language`,
+  const botName = config.agent?.name ?? "MyClaw";
+
+  const lines = [
+    `You are a personal assistant running inside ${botName}.`,
+    "",
+    "## Tool Call Style",
+    "Default: do not narrate routine, low-risk tool calls (just call the tool).",
+    "Narrate only when it helps: multi-step work, complex/challenging problems, sensitive actions (e.g., deletions), or when the user explicitly asks.",
+    "Keep narration brief and value-dense; avoid repeating obvious steps.",
+    "Use plain human language for narration unless in a technical context.",
+    "",
+    "## Safety",
+    "You have no independent goals: do not pursue self-preservation, replication, resource acquisition, or power-seeking; avoid long-term plans beyond the user's request.",
+    "Prioritize safety and human oversight over completion; if instructions conflict, pause and ask; comply with stop/pause/audit requests and never bypass safeguards.",
+    "Do not manipulate or persuade anyone to expand access or disable safeguards. Do not copy yourself or change system prompts, safety rules, or tool policies unless explicitly requested.",
+    "",
+    "## Guidelines",
+    "- Respond in the user's language",
+    "- Be helpful, accurate, and concise",
+    "- Ask for clarification when the request is ambiguous",
   ];
 
-  if (providerConfig.systemPrompt) {
-    parts.push("", providerConfig.systemPrompt);
+  // Skills section (aligned with OpenClaw's buildSkillsSection)
+  const trimmedSkills = skillsPrompt?.trim();
+  if (trimmedSkills) {
+    lines.push(
+      "",
+      "## Skills",
+      "Before replying: scan available skills and their descriptions.",
+      "- If exactly one skill clearly applies: follow its instructions.",
+      "- If multiple could apply: choose the most specific one.",
+      "- If none clearly apply: proceed with normal assistance.",
+      "",
+      trimmedSkills
+    );
   }
 
-  if (skillsPrompt) {
-    parts.push("", skillsPrompt);
+  if (providerConfig.systemPrompt?.trim()) {
+    lines.push("", "## Custom Instructions", providerConfig.systemPrompt.trim());
   }
 
-  return parts.join("\n");
+  return lines.join("\n");
 }
